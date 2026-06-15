@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–4 complete — Milestones 5–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state.
+> Status: **Milestones 1–5 complete — Milestones 6–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1 (Project Setup)** + **M2 (App Shell)** + **M3 (Content Library)** + **M4 (Local State)** complete. The app boots → splash → onboarding → tabs, browses content (Explore + Detail + tutorials), and now has **persistent local state**: age band, favorites, and recents (Zustand + AsyncStorage). No AI/Supabase/upload/projector logic yet.
-- **Awaiting:** explicit approval to proceed to **Milestone 5 (Supabase)**.
+- **Phase:** Documentation + **M1–M4** + **M5 (Supabase Foundation)** complete. The app boots → splash → onboarding → tabs, browses content, and persists local state. The **Supabase foundation** is now in place: guarded offline-safe client, migrations (schema + RLS + storage + retention), generated `seed.sql`, anonymous session + storage services. **The app still runs fully in local/mock mode with no Supabase env** (no crash). No Edge Functions / AI / upload / projector yet.
+- **Awaiting:** explicit approval to proceed to **Milestone 6 (AI Edge Functions)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -152,6 +152,49 @@
 - Favorites/recents are **device-local only** (no cloud sync/login) by V1 design.
 - Not run on a device/simulator here; validated via Metro boot + iOS export.
 
+## Milestone 5 — Supabase Foundation (✅ complete, 2026-06-15)
+
+**What was built**
+- **Guarded client** (`src/services/supabase.ts`): initializes `@supabase/supabase-js` **only** when `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` are present and `EXPO_PUBLIC_FORCE_MOCK !== 'true'`; otherwise exports `null` + `isSupabaseConfigured=false`. Anon key only; service-role key never read. Imports `react-native-url-polyfill/auto` for RN.
+- **Anonymous session** (`src/services/session.ts`): stable device id (expo-crypto `randomUUID` + JS fallback, persisted in AsyncStorage); `ensureSession(age)` upserts `anonymous_sessions` when configured, else returns a local session — never throws, never blocks startup (fire-and-forget call added in `app/_layout.tsx`). `updateSessionAge` best-effort.
+- **Storage foundation** (`src/services/storage.ts`): typed, guarded `getPublicUrl` / `getSignedUrl` / `uploadToBucket` + `BUCKETS` constants. No upload/camera UI, no AI; returns `unconfigured` when offline.
+- **DB types** (`src/types/db.ts`): snake_case row types + full enums (incl. `pending`/`processing`) + a `Database` generic typing the client — kept separate from the camelCase app/API types.
+- **Migrations** (`supabase/migrations/`): `0001_init` (extensions, 6 enums, 6 tables, checks, indexes), `0002_rls` (RLS on all; content read-only to anon; sessions anon best-effort; ai/upload tables service-role-only), `0003_storage` (3 buckets + public-read policy), `0004_retention` (purge function + commented pg_cron).
+- **Seed generation** (preferred path): `src/content/seed.ts` `buildSeedSql()` + `scripts/generate-seed.ts` (`npm run seed:gen`) generate `supabase/seed.sql` from `src/content` (source of truth) using slug-keyed subselects (deterministic, no hard-coded UUIDs). Generated **8 categories, 100 items, 486 steps**. A test guards against drift (committed file must equal generator output).
+
+**Migration files:** `0001_init.sql`, `0002_rls.sql`, `0003_storage.sql`, `0004_retention.sql`.
+**Tables/enums/policies:** 6 tables + 6 enums (`difficulty_level`, `age_range`, `ai_input_type`, `moderation_status`, `generation_status`, `processed_status`); RLS policies — content readable, sessions anon insert/select/update (best-effort), ai/upload tables no anon access (service-role only).
+**Buckets:** `drawing-assets` (public-read), `user-uploads` (private), `ai-generations` (private; signed-URL pattern).
+
+**Security posture (honest):** documented in `0002_rls.sql` — without auth, `device_id` is **not** a secure identity (spoofable); policies are a pragmatic best-effort for anonymous non-PII metadata; activity tables are service-role-only; no service-role operations in the app. A test asserts no `SUPABASE_SERVICE_ROLE_KEY` / `OPENAI_API_KEY` / `REPLICATE_API_TOKEN` appears in `src/` or `app/`.
+
+**Tests (`__tests__`)** — +10: services (Supabase null/unconfigured offline; local session stable + non-throwing; no-secret-env scan) and seed (header/transaction, 8 categories, 100 item subselects, step-row count, apostrophe escaping, **committed seed.sql matches generator**). Total suite **32/32**.
+
+**Commands run & results (M5)**
+| Command | Result |
+| --- | --- |
+| `npm run seed:gen` | ✅ wrote `supabase/seed.sql` (8 cats / 100 items / 486 steps) |
+| `npm test` | ✅ **32/32** (content, seed, state, services) |
+| `npm run typecheck` | ✅ exit 0 |
+| `npm run lint` | ✅ exit 0, no warnings |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npm run start` (Metro) | ✅ "Waiting on http://localhost:8090" |
+| `npx expo export -p ios` | ✅ bundled 1,756 modules (supabase-js + url-polyfill OK) |
+
+**Supabase CLI:** not installed in this environment. Run these later against a project (docs/09 §3–§4): `supabase login` → `supabase link --project-ref <ref>` → `supabase db push` (or `supabase db reset` for a local stack via `supabase start`) → apply `seed.sql` → `supabase migration list` to verify.
+
+**Issues hit & fixed during M5**
+- **Services test transform error**: a `declare const require` shim clashed with the hoisted `jest.mock` (jest-hoist saw a local `require`). Fixed by reading `fs` via `jest.requireActual('fs')` (typed by jest, no node-types pollution).
+- **Session test**: `expo-crypto.randomUUID()` returns `undefined` under the Expo Jest mock (doesn't throw) → `getDeviceId` now falls back on any falsy result (robust in app + tests).
+- **Lint**: removed an unused `eslint-disable no-console` in the seed script (expo config doesn't enable no-console).
+
+**Warnings / unresolved (non-blocking)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- Migrations/seed are **not applied to a live project here** (no Supabase CLI/Docker/cloud); validated by SQL review + the deterministic seed + drift test. Apply against a real project before the pilot.
+- `device_id` RLS is best-effort (no auth) — documented in the migration + `04`/`08`.
+- Storage upload/signed-URL helpers are foundations; the upload flow (M8) and AI writes (M6) are not implemented.
+- Not run on a device/simulator here; validated via Metro boot + iOS export.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -234,13 +277,33 @@ eslint.config.js                                     (updated — jest test-file
 README.md / docs/10-handoff.md                       (updated for M4)
 ```
 
-## How to run (current — Milestone 4)
-See `09-deployment-runbook.md` §2.
-```bash
-npm install && cp .env.example .env && npm run start   # then press i / a, or scan with Expo Go
-npm test                                               # content + state suites (22 tests)
+**Milestone 5 — Supabase Foundation (new/added):**
 ```
-First launch → splash → onboarding → tabs. Browse **Explore**, open a drawing → **Start tutorial**; tap the **heart** to favorite (persists); favorites show on Home + the Favorites screen. Settings → **Manage** clears favorites/recents; dev buttons reset onboarding / add a demo recent. (Node ≥ 22.13 recommended.)
+src/services/supabase.ts · session.ts · storage.ts   (new — guarded, offline-safe)
+src/services/.gitkeep                                (removed)
+src/types/db.ts                                      (new — DB row types + enums + Database)
+src/content/seed.ts                                  (new — buildSeedSql)
+scripts/generate-seed.ts                             (new — npm run seed:gen)
+supabase/migrations/{0001_init,0002_rls,0003_storage,0004_retention}.sql   (new)
+supabase/migrations/.gitkeep                         (removed)
+supabase/seed.sql                                    (new — generated; 8 cats / 100 items / 486 steps)
+src/services/__tests__/services.test.ts              (new — 4 tests)
+src/content/__tests__/seed.test.ts                   (new — 6 tests)
+app/_layout.tsx                                       (updated — fire-and-forget ensureSession)
+tsconfig.json                                         (updated — exclude scripts/ from tsc)
+eslint.config.js                                      (updated — allowEmptyCatch)
+package.json / package-lock.json                      (react-native-url-polyfill, tsx; seed:gen)
+README.md / docs/10-handoff.md                        (updated for M5)
+```
+
+## How to run (current — Milestone 5)
+See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
+```bash
+npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
+npm test                                               # content + seed + state + services (32 tests)
+npm run seed:gen                                       # regenerate supabase/seed.sql from src/content
+```
+To enable the backend: set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`, apply migrations + `seed.sql` to a Supabase project (docs/09 §3). (Node ≥ 22.13 recommended.)
 
 ## How to configure Supabase
 See `09-deployment-runbook.md` §3–§4 and `04-database-schema.md`. Summary: create project → `supabase link` → `db push` migrations → run `seed.sql` → create buckets → set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`.
@@ -263,6 +326,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 2 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (4.1MB bundle compiles).
 - **Milestone 3 checks (all pass):** `npm test` (**9/9** content integrity), `npm run lint` (0 findings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,680 modules).
 - **Milestone 4 checks (all pass):** `npm test` (**22/22** — content + state), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,686 modules).
+- **Milestone 5 checks (all pass):** `npm test` (**32/32** — content + seed + state + services), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,756 modules), `npm run seed:gen` (seed generated). Supabase CLI not run locally (no project) — commands documented for later.
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -283,8 +347,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 5 (Supabase — client, schema/migrations, anonymous session).** (Milestones 1–4 are complete.)
-2. Execute Milestones 5→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 6 (AI Edge Functions — moderate-prompt, generate-image, transform-image, process-uploaded-image + provider abstraction + mock fallback + rate limiting).** (Milestones 1–5 are complete.)
+2. Execute Milestones 6→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

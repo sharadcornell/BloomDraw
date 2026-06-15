@@ -37,6 +37,7 @@
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
+    "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.8.3",
     "zustand": "^5.0.14"
@@ -48,6 +49,7 @@
     "eslint-config-expo": "~56.0.4",
     "jest": "~29.7.0",
     "jest-expo": "~56.0.5",
+    "tsx": "^4.22.4",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -57,7 +59,8 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "seed:gen": "tsx scripts/generate-seed.ts"
   },
   "private": true
 }

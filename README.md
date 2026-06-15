@@ -1,11 +1,11 @@
 # BloomDraw 🌸✏️
 
-> **Milestones 1–4 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, first-run age onboarding, themed bottom tabs, a working **content library** (8 categories, ~100 seeded drawings / 20 heroes, Explore filters, Drawing Detail, 4/6/8-step tutorials), and **persistent local state** (age, favorites, recents via Zustand + AsyncStorage). AI/Supabase/upload/projector logic begins at Milestone 5+, pending approval.
+> **Milestones 1–5 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, age onboarding, themed tabs, a **content library** (8 categories, ~100 drawings / 20 heroes, Explore filters, Detail, 4/6/8-step tutorials), **persistent local state** (age, favorites, recents), and a **Supabase foundation** (guarded offline-safe client, migrations, generated seed, anonymous session + storage services). The app runs fully in local/mock mode without Supabase. AI Edge Functions / upload / projector begin at Milestone 6+, pending approval.
 
 **BloomDraw** is an AI-powered drawing companion for kids (ages 3–12) that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences. Built for parents and gift-buyers as a premium, kid-safe creative-learning app — and as the software companion to a future BloomDraw drawing **projector**.
 
 ## Status
-🟢 **Milestones 1–4 complete** — project setup + app shell + content library + local state (persistent age, favorites, recents). All checks pass (lint, typecheck, **22/22 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 5–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
+🟢 **Milestones 1–5 complete** — project setup + app shell + content library + local state + Supabase foundation (guarded client, migrations, generated seed, session/storage services). All checks pass (lint, typecheck, **32/32 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 6–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
 
 ## What it does (V1 / MVP)
 - 📚 Browse a library of ~100 guided drawings across 8 categories (Alphabets, Numbers, Animals, Vehicles, Space, Nature, Curriculum, Cards).
@@ -63,7 +63,8 @@ Today this boots to a placeholder Home screen (Milestone 1). As features land, w
 | `npm run lint` | ESLint (`eslint .`) | ✅ M1 |
 | `npm run typecheck` | `tsc --noEmit` (strict) | ✅ M1 |
 | `npx expo-doctor` | Expo health check | ✅ M1 |
-| `npm run test` | Jest unit tests (jest-expo) — content + state suites (22 tests) | ✅ M3–M4 |
+| `npm run test` | Jest unit tests (jest-expo) — content + seed + state + services (32 tests) | ✅ M3–M5 |
+| `npm run seed:gen` | Regenerate `supabase/seed.sql` from `src/content` (source of truth) | ✅ M5 |
 
 ## Configuration
 - App-public config via `EXPO_PUBLIC_*` (Supabase URL + anon key + app env).
@@ -81,9 +82,11 @@ src/
   state/                 useAppStore (age/onboarding) · useFavoritesStore · useRecentsStore (persisted)
   lib/                   strings · placeholders
   types/                 shared types (Category, DrawingItem, DrawingStep, …)
-  content/               categories + 8 item files + queries + validate (8 cats, 100 items)
-  services/              (empty — filled in M5)
-supabase/    migrations · functions/{_shared,moderate-prompt,generate-image,transform-image,process-uploaded-image}  (empty scaffolding)
+  content/               categories + 8 item files + queries + validate + seed (8 cats, 100 items)
+  services/              supabase (guarded client) · session · storage  (offline-safe)
+  types/db.ts            DB row types + enums + Database (separate from app types)
+scripts/     generate-seed.ts (npm run seed:gen)
+supabase/    migrations/{0001_init,0002_rls,0003_storage,0004_retention}.sql · seed.sql · functions/* (empty — M6)
 assets/      icons · splash · placeholder art  (Expo placeholder icons until brand pass)
 docs/        product + technical documentation (source of truth)
 app.json · tsconfig.json · eslint.config.js · package.json · .env.example · CLAUDE.md

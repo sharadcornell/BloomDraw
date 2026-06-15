@@ -30,7 +30,7 @@ Useful scripts: `npm run ios`, `npm run android`, `npm run lint`, `npm run typec
    supabase db push            # applies supabase/migrations/* (init, rls, storage)
    # or, for a clean local DB: supabase start && supabase db reset
    ```
-4. Seed content: run `supabase/seed.sql` (e.g., `psql` or the SQL editor) — mirrors `src/content`.
+4. Seed content: run `supabase/seed.sql` (e.g., `psql` or the SQL editor). It is **generated** from `src/content` via `npm run seed:gen` (the committed file is kept in sync by a drift test) — regenerate after editing content rather than hand-editing.
 5. Create storage buckets (if not created by migration `0003_storage.sql`): `drawing-assets` (public read), `user-uploads` (private), `ai-generations` (private). Apply storage policies per `04` §5/§6.
 6. Put the public values in the app env:
    ```

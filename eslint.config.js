@@ -10,6 +10,12 @@ module.exports = defineConfig([
     ignores: ["dist/*", ".expo/*", "ios/*", "android/*", "supabase/functions/**"],
   },
   {
+    rules: {
+      // Services use fail-soft empty catches for offline/unconfigured paths.
+      "no-empty": ["error", { allowEmptyCatch: true }],
+    },
+  },
+  {
     // Jest globals + jest-mock patterns for test files.
     files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
     languageOptions: {

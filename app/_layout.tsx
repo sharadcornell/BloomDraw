@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { BloomSplash } from '@/components';
+import { ensureSession } from '@/services/session';
 import { useAppStore, useFavoritesStore, useRecentsStore } from '@/state';
 import { fontAssets } from '@/theme/fonts';
 import { theme } from '@/theme/theme';
@@ -41,6 +42,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+
+  // Fire-and-forget anonymous session (no-op offline; never blocks startup).
+  useEffect(() => {
+    if (!ready) return;
+    void ensureSession(useAppStore.getState().selectedAgeRange);
   }, [ready]);
 
   if (!ready) return null;
