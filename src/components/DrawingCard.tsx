@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { useFavoritesStore, useIsFavorite } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 import type { DrawingItem } from '@/types';
 
@@ -19,12 +20,17 @@ type Props = {
 /**
  * Grid/row card for a drawing item: placeholder thumbnail + title + meta.
  *
- * The heart is a PLACEHOLDER (ephemeral local state only) — real favorites
- * persistence lands in Milestone 4.
+ * The heart toggles a persisted local favorite (Milestone 4).
  */
 export function DrawingCard({ item, onPress, style }: Props) {
   const accent = getCategoryAccent(item.categorySlug);
-  const [faved, setFaved] = useState(false);
+  const faved = useIsFavorite(item.slug);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+
+  const onToggleFav = () => {
+    Haptics.selectionAsync().catch(() => {});
+    toggleFavorite(item.slug);
+  };
 
   return (
     <Pressable
@@ -37,7 +43,7 @@ export function DrawingCard({ item, onPress, style }: Props) {
         <View>
           <DrawingThumbnail emoji={item.emoji} accent={accent} height={110} />
           <Pressable
-            onPress={() => setFaved((v) => !v)}
+            onPress={onToggleFav}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={faved ? 'Remove favorite' : 'Add favorite'}

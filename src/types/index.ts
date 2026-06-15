@@ -44,6 +44,25 @@ export type DrawingStep = {
   imageUrl: string | null;
 };
 
+/** Kinds of creations stored in recents. Photo/AI flows arrive in M7–M8. */
+export type RecentType = 'ai_generation' | 'uploaded_image' | 'preloaded_drawing';
+
+export type RecentCreation = {
+  id: string;
+  type: RecentType;
+  title: string;
+  /** Emoji used for the placeholder thumbnail (until real images exist). */
+  emoji?: string;
+  thumbnailUrl?: string | null;
+  /** Epoch ms — recents are ordered newest-first. */
+  createdAt: number;
+  // Optional context future flows attach:
+  prompt?: string;
+  style?: string;
+  /** For `preloaded_drawing`, the drawing item slug to re-open. */
+  slug?: string;
+};
+
 export type DrawingItem = {
   id: string;
   slug: string;

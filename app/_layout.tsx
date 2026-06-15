@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { BloomSplash } from '@/components';
-import { useAppStore } from '@/state/useAppStore';
+import { useAppStore, useFavoritesStore, useRecentsStore } from '@/state';
 import { fontAssets } from '@/theme/fonts';
 import { theme } from '@/theme/theme';
 
@@ -25,7 +25,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontAssets);
-  const hasHydrated = useAppStore((state) => state._hasHydrated);
+  const appHydrated = useAppStore((state) => state._hasHydrated);
+  const favoritesHydrated = useFavoritesStore((state) => state._hasHydrated);
+  const recentsHydrated = useRecentsStore((state) => state._hasHydrated);
   const [forceReady, setForceReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
 
@@ -34,7 +36,8 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  const ready = (fontsLoaded || !!fontError) && (hasHydrated || forceReady);
+  const storesHydrated = appHydrated && favoritesHydrated && recentsHydrated;
+  const ready = (fontsLoaded || !!fontError) && (storesHydrated || forceReady);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});

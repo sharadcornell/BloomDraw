@@ -12,15 +12,17 @@ import {
   DemoModeBadge,
   DrawingCard,
   EmptyState,
+  RecentCard,
   Screen,
   SectionHeader,
 } from '@/components';
-import { CATEGORIES, getFeaturedItems, getRecommendedItems } from '@/content';
+import { CATEGORIES, getFeaturedItems, getItemBySlug, getRecommendedItems } from '@/content';
 import { CREATE_OPTIONS } from '@/lib/placeholders';
 import { strings } from '@/lib/strings';
-import { useAppStore } from '@/state/useAppStore';
+import { useAppStore, useFavoritesStore, useRecentsStore } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
+import type { DrawingItem } from '@/types';
 
 /** Home — hero, age filter, real featured/recommended content, and create entry points. */
 export default function HomeScreen() {
@@ -29,8 +31,16 @@ export default function HomeScreen() {
   const selectedAgeRange = useAppStore((s) => s.selectedAgeRange);
   const setAgeRange = useAppStore((s) => s.setAgeRange);
 
+  const favoriteSlugs = useFavoritesStore((s) => s.favorites);
+  const recents = useRecentsStore((s) => s.recents);
+
   const featured = getFeaturedItems().slice(0, 10);
   const recommended = getRecommendedItems(selectedAgeRange, 8);
+  const favoriteItems = favoriteSlugs
+    .map((slug) => getItemBySlug(slug))
+    .filter((i): i is DrawingItem => Boolean(i))
+    .slice(0, 10);
+  const recentPreview = recents.slice(0, 10);
   const categoryWidth = isTablet ? '23%' : '47%';
 
   return (
@@ -156,19 +166,51 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
 
-      {/* Recents + favorites placeholders (Milestone 4) */}
+      {/* Recent creations */}
       <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.section}>
-        <SectionHeader title={strings.home.recents} />
-        <Card>
-          <EmptyState emoji="🌱" message={strings.empty.recents} />
-        </Card>
+        <SectionHeader
+          title={strings.home.recents}
+          actionLabel={recentPreview.length > 0 ? strings.home.seeAll : undefined}
+          onAction={recentPreview.length > 0 ? () => router.push('/recents') : undefined}
+        />
+        {recentPreview.length === 0 ? (
+          <Card>
+            <EmptyState emoji="🌱" message={strings.empty.recents} />
+          </Card>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+            {recentPreview.map((item) => (
+              <View key={item.id} style={styles.hCard}>
+                <RecentCard
+                  item={item}
+                  onPress={() => item.slug && router.push(`/drawing/${item.slug}`)}
+                />
+              </View>
+            ))}
+          </ScrollView>
+        )}
       </Animated.View>
 
+      {/* Favorites */}
       <Animated.View entering={FadeInDown.delay(480).duration(400)} style={styles.section}>
-        <SectionHeader title={strings.home.favorites} />
-        <Card>
-          <EmptyState emoji="❤️" message={strings.empty.favorites} />
-        </Card>
+        <SectionHeader
+          title={strings.home.favorites}
+          actionLabel={favoriteItems.length > 0 ? strings.home.seeAll : undefined}
+          onAction={favoriteItems.length > 0 ? () => router.push('/favorites') : undefined}
+        />
+        {favoriteItems.length === 0 ? (
+          <Card>
+            <EmptyState emoji="❤️" message={strings.empty.favorites} />
+          </Card>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+            {favoriteItems.map((item) => (
+              <View key={item.slug} style={styles.hCard}>
+                <DrawingCard item={item} onPress={() => router.push(`/drawing/${item.slug}`)} />
+              </View>
+            ))}
+          </ScrollView>
+        )}
       </Animated.View>
 
       {/* Projector preview entry (placeholder) */}

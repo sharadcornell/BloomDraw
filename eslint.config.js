@@ -10,7 +10,7 @@ module.exports = defineConfig([
     ignores: ["dist/*", ".expo/*", "ios/*", "android/*", "supabase/functions/**"],
   },
   {
-    // Jest globals for test files.
+    // Jest globals + jest-mock patterns for test files.
     files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
     languageOptions: {
       globals: {
@@ -24,6 +24,11 @@ module.exports = defineConfig([
         afterEach: "readonly",
         jest: "readonly",
       },
+    },
+    rules: {
+      // `jest.mock(...)` is hoisted above imports and its factory uses require().
+      "import/first": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ]);

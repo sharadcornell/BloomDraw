@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–3 complete — Milestones 4–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records the documentation deliverable + M1 setup + M2 app shell + M3 content library.
+> Status: **Milestones 1–4 complete — Milestones 5–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1 (Project Setup)** + **M2 (App Shell)** + **M3 (Content Library)** complete. The app boots → splash → onboarding (first run) → tabs, and now has a working preloaded content library: Explore with filters, Drawing Detail, and step-by-step tutorials. No AI/Supabase/upload/projector/favorites-persistence logic yet.
-- **Awaiting:** explicit approval to proceed to **Milestone 4 (Local state — favorites & recents)**.
+- **Phase:** Documentation + **M1 (Project Setup)** + **M2 (App Shell)** + **M3 (Content Library)** + **M4 (Local State)** complete. The app boots → splash → onboarding → tabs, browses content (Explore + Detail + tutorials), and now has **persistent local state**: age band, favorites, and recents (Zustand + AsyncStorage). No AI/Supabase/upload/projector logic yet.
+- **Awaiting:** explicit approval to proceed to **Milestone 5 (Supabase)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -117,6 +117,41 @@
 - Favorite heart on cards/detail is a visual placeholder (ephemeral state); real persistence is **Milestone 4**.
 - Not run on a device/simulator here; validated via Metro boot + iOS export.
 
+## Milestone 4 — Local State (✅ complete, 2026-06-15)
+
+**What was built**
+- **Pure state reducers** (`src/state/_helpers.ts`): age (`isValidAgeRange`, `sanitizeAgeRange`, `coerceAgeRange`→6-8 default), favorites (`add/remove/toggle`, `sanitizeFavorites` dedupe), recents (`addRecent` newest-first + de-dupe by id + cap 50, `removeRecent`, `sanitizeRecents`). All immutable + unit-tested without AsyncStorage.
+- **Favorites store** (`useFavoritesStore`): persisted slug array; `toggleFavorite/add/remove/isFavorite/clearFavorites`; `useIsFavorite(slug)` selector hook. Versioned (v1), sanitized on rehydrate.
+- **Recents store** (`useRecentsStore`): persisted `RecentCreation[]` supporting `ai_generation | uploaded_image | preloaded_drawing`; actions `addRecentCreation / removeRecentCreation / clearRecents / getRecentCreations` + a non-React `recents` API for future flows; auto id/createdAt; cap 50; versioned + sanitized.
+- **App store** age safety: `_sanitize` on every rehydrate — invalid age → 6-8 (if onboarded) else null; non-boolean onboarded → false. Corrupt payload can never crash or hang (2s splash fallback retained).
+- **Hydration gate**: splash now waits for all three stores to hydrate (no favorites/recents flash).
+- **UI wired**: DrawingCard + Drawing Detail hearts persist favorites; **Favorites route** (`app/favorites.tsx`) reachable from Home; Home shows **real** favorites + recents previews (with empty states + "See all"); **Recents screen** lists creations with remove + Clear; **Settings → Manage** clears favorites/recents (confirm dialogs) + dev "Add demo recent" / "Reset onboarding".
+- **Recents type model** (`RecentCreation` in `src/types`) ready for M7–M8 to populate.
+
+**Tests (`src/state/__tests__/state.test.ts`)** — 13 tests: age validate/sanitize/coerce-default; favorites add/remove/toggle/idempotency/no-dupes/sanitize; recents newest-first/de-dupe/cap/remove/sanitize; favorites & recents **store** actions (toggle/clear, add/remove/clear) via the official AsyncStorage Jest mock. Total suite now **22/22**.
+
+**Commands run & results (M4)**
+| Command | Result |
+| --- | --- |
+| `npm test` | ✅ **22/22** (9 content + 13 state) |
+| `npm run typecheck` | ✅ exit 0 (after typed-routes regen for `/favorites`) |
+| `npm run lint` | ✅ exit 0, no warnings |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npm run start` (Metro) | ✅ "Waiting on http://localhost:8089" |
+| `npx expo export -p ios` | ✅ bundled (1,686 modules) |
+
+**Issues hit & fixed during M4**
+- **State tests failed** importing stores: AsyncStorage's native module is null under Jest. Fixed with the package's official Jest mock (`@react-native-async-storage/async-storage/jest/async-storage-mock`) via a hoisted `jest.mock`.
+- **Typecheck/lint on the hoisted mock**: global `jest` untyped under expo's scoped tsconfig, plus `import/first` + `no-require-imports` warnings. Fixed via a `/// <reference types="jest" />` in the state test and an ESLint test-files rule override.
+- **Typed routes**: regenerated for the new `/favorites` route (Metro boot), as in M2/M3.
+
+**Warnings / unresolved (non-blocking)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- Full AsyncStorage persistence **round-trip across app restarts** is verified manually (unit tests use the in-memory mock); store logic itself is unit-tested.
+- Recents stays empty in normal use until M7–M8 (a dev-only "Add demo recent" button exercises the UI).
+- Favorites/recents are **device-local only** (no cloud sync/login) by V1 design.
+- Not run on a device/simulator here; validated via Metro boot + iOS export.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -179,13 +214,33 @@ package.json / package-lock.json                    (jest-expo, jest, @types/jes
 README.md / docs/10-handoff.md                      (updated for M3)
 ```
 
-## How to run (current — Milestone 3)
+**Milestone 4 — Local State (new/added):**
+```
+src/state/_helpers.ts                               (new — pure age/favorites/recents reducers)
+src/state/useFavoritesStore.ts · useRecentsStore.ts (new — persisted, versioned)
+src/state/useAppStore.ts                            (updated — _sanitize on rehydrate)
+src/state/index.ts                                  (new — barrel + useIsFavorite + recents API)
+src/state/__tests__/state.test.ts                   (new — 13 tests)
+src/types/index.ts                                  (extended — RecentCreation, RecentType)
+src/components/RecentCard.tsx + index.ts            (new)
+src/components/DrawingCard.tsx                       (updated — persisted favorite heart)
+app/_layout.tsx                                      (updated — hydrate all 3 stores)
+app/favorites.tsx                                    (new route)
+app/drawing/[slug].tsx                               (updated — persisted favorite heart)
+app/(tabs)/index.tsx                                 (updated — real favorites/recents previews)
+app/(tabs)/recents.tsx                               (rewritten — real recents + clear)
+app/(tabs)/settings.tsx                              (updated — Manage: clear favorites/recents + dev)
+eslint.config.js                                     (updated — jest test-file rule override)
+README.md / docs/10-handoff.md                       (updated for M4)
+```
+
+## How to run (current — Milestone 4)
 See `09-deployment-runbook.md` §2.
 ```bash
 npm install && cp .env.example .env && npm run start   # then press i / a, or scan with Expo Go
-npm test                                               # content integrity suite (9 tests)
+npm test                                               # content + state suites (22 tests)
 ```
-First launch → splash → onboarding → tabs. Browse **Explore** (filter by category/age/difficulty), open a drawing → **Start tutorial** (4/6/8 steps). (Node ≥ 22.13 recommended.) Settings → "Reset onboarding (dev)" replays first-run.
+First launch → splash → onboarding → tabs. Browse **Explore**, open a drawing → **Start tutorial**; tap the **heart** to favorite (persists); favorites show on Home + the Favorites screen. Settings → **Manage** clears favorites/recents; dev buttons reset onboarding / add a demo recent. (Node ≥ 22.13 recommended.)
 
 ## How to configure Supabase
 See `09-deployment-runbook.md` §3–§4 and `04-database-schema.md`. Summary: create project → `supabase link` → `db push` migrations → run `seed.sql` → create buckets → set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`.
@@ -207,6 +262,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 1 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (strict, 0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (bundle compiles).
 - **Milestone 2 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (4.1MB bundle compiles).
 - **Milestone 3 checks (all pass):** `npm test` (**9/9** content integrity), `npm run lint` (0 findings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,680 modules).
+- **Milestone 4 checks (all pass):** `npm test` (**22/22** — content + state), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,686 modules).
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -227,8 +283,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 4 (Local state — favorites & recents).** (Milestones 1–3 are complete.)
-2. Execute Milestones 4→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 5 (Supabase — client, schema/migrations, anonymous session).** (Milestones 1–4 are complete.)
+2. Execute Milestones 5→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

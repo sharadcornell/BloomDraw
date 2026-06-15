@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -17,6 +17,7 @@ import {
   SectionHeader,
 } from '@/components';
 import { getCategory, getItemBySlug } from '@/content';
+import { useFavoritesStore, useIsFavorite } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 
 /** Drawing Detail — final/trace placeholders, meta, and tutorial entry (docs/02 §3). */
@@ -24,7 +25,9 @@ export default function DrawingDetailScreen() {
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const item = slug ? getItemBySlug(slug) : undefined;
-  const [faved, setFaved] = useState(false);
+  // Hooks must run unconditionally (before the not-found early return).
+  const faved = useIsFavorite(slug ?? '');
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
   if (!item) {
     return (
@@ -51,7 +54,10 @@ export default function DrawingDetailScreen() {
         title={item.title}
         right={
           <Pressable
-            onPress={() => setFaved((v) => !v)}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              toggleFavorite(item.slug);
+            }}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={faved ? 'Remove favorite' : 'Add favorite'}
