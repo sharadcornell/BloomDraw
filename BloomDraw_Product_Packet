@@ -1,0 +1,1471 @@
+# BloomDraw Product + Build Packet v1
+
+## 0. Operating Instruction for Opus 4.8
+
+You are acting as an onshore product, design, architecture, full-stack engineering, AI engineering, QA, and delivery team.
+
+You are building a production-quality MVP app called BloomDraw.
+
+You must not behave like a simple chatbot. You must behave like a professional app-building team that can plan, document, build, test, fix, and hand off the project.
+
+Your responsibility is to:
+
+1. Understand the product scope
+2. Create product documentation
+3. Create technical documentation
+4. Create architecture documentation
+5. Create the Expo React Native app
+6. Create Supabase backend structure
+7. Create AI integration architecture
+8. Build the core app screens and flows
+9. Build real API-ready AI functions using environment variables
+10. Add mock fallbacks where API keys are not available
+11. Test and fix the app
+12. Produce a final handoff
+
+Do not over-engineer. Do not add non-MVP features. Do not add fake features unless clearly marked as mock/demo fallback. Build a polished MVP that feels real, beautiful, fast, and ready for investor/customer pilot demonstration.
+
+If something is unclear but reversible, make the best product/engineering decision and continue. Ask questions only if truly blocked.
+
+---
+
+# 1. Product Overview
+
+## Product Name
+
+BloomDraw
+
+## One-Line Description
+
+BloomDraw is an AI-powered drawing companion for kids that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences.
+
+## Product Type
+
+Mobile and tablet app for iOS and Android.
+
+## Long-Term Product Vision
+
+BloomDraw will eventually pair with a physical drawing projector device. Children will select or create artwork in the app, then project it onto paper or a wall and trace/draw it.
+
+## MVP Product Vision
+
+The MVP focuses on building the app experience first. Hardware integration is not required in V1. Instead, the app should include a polished “Projector Preview Mode” that shows how an image would be prepared for projection.
+
+---
+
+# 2. Target Users
+
+## Primary End Users
+
+Children aged 3–12.
+
+## Primary Buyers / Decision Makers
+
+Parents, grandparents, relatives, and gift buyers.
+
+## Secondary Future Users
+
+Art and craft teachers, schools, after-school programs, learning centers, and hobby artists.
+
+## Primary MVP Market Lens
+
+D2C parent + child creative learning app.
+
+B2B/school use is future positioning, not part of strict V1.
+
+---
+
+# 3. Core Problem
+
+Children often want to draw but get discouraged because drawing from reference is difficult. They may struggle to turn what they see into a good-looking drawing. Parents want hands-on creative activities that are educational, screen-assisted, but not purely passive screen time.
+
+BloomDraw solves this by helping children create, trace, and learn drawings through:
+
+* preloaded step-by-step lessons
+* image-to-line-art conversion
+* image-to-sketch conversion
+* image-to-cartoon conversion
+* kid-safe AI prompt-to-image generation
+* projector-ready preview modes
+
+---
+
+# 4. Core Value Proposition
+
+BloomDraw makes drawing easier, more fun, more guided, and more confidence-building for kids.
+
+It turns any idea, photo, or learning topic into traceable creative output.
+
+---
+
+# 5. MVP Goal
+
+Build a beautiful, fast, polished iOS/Android app that demonstrates the complete BloomDraw app experience before hardware integration.
+
+The MVP should prove:
+
+1. Users can easily browse drawing content.
+2. Kids and parents understand the drawing/tutorial experience.
+3. The app feels modern, magical, premium, and child-friendly.
+4. Uploaded/captured photos can become trace-ready styles.
+5. AI prompt generation can create kid-safe drawing images.
+6. AI-generated images can also produce simplified line-art versions.
+7. The projector-preview concept is clear even without physical hardware.
+8. The app is ready for investor demo, user pilot, and manufacturer conversations.
+
+---
+
+# 6. MVP Scope
+
+## Must-Have V1 Features
+
+### A. Beautiful App Experience
+
+Build a highly polished mobile/tablet app with:
+
+* animated loader / splash experience
+* modern home screen
+* playful but premium UI
+* smooth transitions
+* animated cards
+* bottom tab navigation
+* mobile and tablet responsiveness
+* friendly kid-safe visual language
+
+The app should feel like a mix of:
+
+* playful toy
+* premium educational app
+* magical creative studio
+* parent-trustworthy learning product
+
+### B. Home Screen
+
+The home screen should show:
+
+* hero section
+* age filter
+* featured drawing lessons
+* content categories
+* recent creations
+* AI creation entry point
+* camera/gallery upload entry point
+* projector preview entry point
+* favorites section if available
+
+### C. Age Filter
+
+Use age ranges instead of full child profiles in V1.
+
+Required age filters:
+
+* 3–5
+* 6–8
+* 9–12
+
+The selected age range should influence visible/recommended content and difficulty.
+
+Do not build full child profiles in V1.
+
+### D. Preloaded Content Library
+
+Create a structured content library with approximately 100 content items.
+
+It is acceptable to use a mix of:
+
+* polished sample/hero content
+* placeholder content
+* structured metadata
+* simple generated/demo assets
+
+The app should have visible categories even if some content items are placeholders.
+
+Essential categories:
+
+1. Alphabets
+2. Numbers
+3. Animals
+4. Vehicles
+5. Space
+6. Nature
+7. School/curriculum drawings
+8. Cards/gifting templates
+
+Optional additional categories if easy:
+
+* shapes
+* festivals
+* landscapes
+* people
+* cute characters
+
+### E. Preloaded Step-by-Step Drawing Tutorials
+
+Preloaded drawings must support step-by-step tutorials.
+
+Each drawing item should include:
+
+* title
+* category
+* age range
+* difficulty
+* thumbnail
+* final drawing
+* projection-ready / tracing version
+* 4–8 drawing steps
+* favorite option
+* projector preview button
+
+Step count rules:
+
+* easy drawings: 4 steps
+* medium drawings: 6 steps
+* harder drawings: 8 steps
+
+### F. Camera/Gallery Upload
+
+Users should be able to:
+
+* open camera
+* select from gallery
+* crop/confirm image
+* send image for transformation
+* view generated output styles
+
+Required output styles for uploaded/captured images:
+
+1. Original preview
+2. Line art
+3. Pencil sketch
+4. Coloring-page style
+5. Cartoon style
+
+True step-by-step tutorial generation is not required for uploaded images in V1.
+
+If easy, include a “progressive tracing layers” fallback:
+
+* outline
+* major shapes
+* details
+* final trace version
+
+But do not make this a blocker.
+
+### G. AI Prompt-to-Image Generation
+
+Users should be able to enter a prompt such as:
+
+“cute elephant astronaut on the moon”
+
+The app should generate:
+
+1. Kid-safe image
+2. Simplified line-art version
+3. Projection-ready version
+
+True step-by-step tutorial generation is not required for AI-generated images in V1.
+
+If feasible, show progressive layers or a simple “AI drawing guide” as a bonus, but do not block the MVP on it.
+
+### H. AI Safety Layer
+
+The AI feature must include strong kid-safe controls.
+
+Before generation:
+
+1. Prompt is sent to moderation/safety function.
+2. Unsafe prompts are blocked.
+3. Borderline prompts can be safely rewritten.
+4. Only kid-safe prompts go to image generation.
+5. The final prompt sent to the image API should be optimized for child-friendly drawing output.
+
+Required behavior:
+
+* block violent, sexual, hateful, self-harm, adult, or unsafe content
+* rewrite scary/aggressive prompts into gentle child-safe versions where appropriate
+* return friendly kid-safe error messages
+* never expose raw moderation details to the child
+
+Example:
+
+User prompt:
+“dragon fighting monster with blood”
+
+Safe rewrite:
+“friendly dragon flying in a magical forest”
+
+Or block if unsafe.
+
+### I. Favorites and Recents
+
+Since there is no login in V1, store favorites and recents locally on-device.
+
+Required:
+
+* favorite preloaded drawings
+* view recent generated/uploaded creations
+* remove favorite
+* clear recents if easy
+
+Optional:
+
+* sync later after auth is added
+
+### J. Projector Preview Mode
+
+No real hardware connection is required in V1.
+
+But build a polished Projector Preview Mode that shows how the selected image would be prepared for a projector.
+
+Required controls:
+
+* full-screen preview
+* rotate
+* zoom/resize
+* adjust outline thickness if feasible
+* brightness/high-contrast mode
+* paper-size preview
+* “Connect projector coming soon” state
+
+This screen should make the future hardware product obvious.
+
+### K. Backend Storage
+
+Use Supabase.
+
+Store anonymous data only.
+
+Backend should store:
+
+* anonymous session ID
+* AI prompts
+* safe rewritten prompts
+* moderation result summary
+* generated image metadata
+* uploaded image metadata
+* output style metadata
+* timestamps
+* selected age filter if relevant
+
+Do not require user login in V1.
+
+Do not build full accounts or cloud profile sync in V1.
+
+### L. Real AI Integration Architecture
+
+Build real API-ready integration through environment variables.
+
+If API keys are not available, include a mock fallback so the app can still run locally.
+
+The production path must be real and ready for keys.
+
+Do not hardcode API keys in the app.
+
+Do not put secret API keys in the Expo mobile app bundle.
+
+AI calls should go through Supabase Edge Functions or a server-side layer.
+
+---
+
+# 7. Out of Scope for V1
+
+Do not build these in V1:
+
+1. Actual Bluetooth projector connection
+2. Actual Wi-Fi projector connection
+3. Physical device pairing
+4. Payments/subscriptions
+5. Full login/authentication
+6. Full child profiles
+7. School dashboard
+8. Teacher/classroom management
+9. B2B admin portal
+10. YouTube/video tutorial integration
+11. Social sharing
+12. Marketplace/content store
+13. Generated-image true step-by-step tutorials as a hard requirement
+14. Uploaded-image true step-by-step tutorials as a hard requirement
+
+These can be documented as future phases.
+
+---
+
+# 8. Product Positioning
+
+Use this positioning internally:
+
+BloomDraw is an AI-powered drawing companion for kids that helps families turn ideas, photos, and learning topics into traceable art and step-by-step drawing experiences.
+
+It is not just a projector app.
+
+It is:
+
+* creative learning
+* guided drawing
+* AI-assisted imagination
+* future hardware companion
+* parent-child activity platform
+
+---
+
+# 9. Recommended Tech Stack
+
+## App
+
+* Expo React Native
+* TypeScript
+* Expo Router
+* React Native Reanimated
+* Moti or similar animation helper if useful
+* NativeWind or another simple styling approach
+* Zustand or React Context for lightweight state
+* AsyncStorage for local favorites/recents
+* Expo Image Picker
+* Expo Camera if needed
+* Expo Image Manipulator if useful
+
+## Backend
+
+* Supabase
+* Supabase Postgres
+* Supabase Storage
+* Supabase Edge Functions
+* Supabase JavaScript client
+
+## AI
+
+Create AI provider abstraction.
+
+Default production path:
+
+* text moderation/safety
+* prompt rewrite
+* prompt-to-image generation
+* image-to-line-art / sketch / cartoon transformation
+* image metadata storage
+
+The implementation should support provider replacement.
+
+Recommended abstraction:
+
+AIProvider:
+
+* moderatePrompt(prompt)
+* rewritePromptForKidSafety(prompt)
+* generateImage(prompt, options)
+* transformImage(image, style)
+* generateLineArt(image)
+* generateSketch(image)
+* generateCartoon(image)
+* generateColoringPage(image)
+
+The app should not be tightly coupled to one AI vendor.
+
+Use environment variables for API keys.
+
+Include mock provider fallback for local/demo mode.
+
+---
+
+# 10. Hybrid Image Pipeline
+
+For uploaded/captured images, use a hybrid pipeline.
+
+V1 pipeline:
+
+1. User selects/captures image
+2. App resizes/compresses image if needed
+3. Image is uploaded to Supabase Storage or passed to Edge Function
+4. Edge Function sends image to AI transformation provider
+5. AI provider returns generated variants:
+
+   * line art
+   * pencil sketch
+   * coloring page
+   * cartoon
+6. App displays variants in a gallery
+7. User selects one variant
+8. User opens projector preview
+
+If local/simple preprocessing is feasible, add:
+
+* crop
+* resize
+* contrast adjustment
+* basic grayscale preview
+
+But do not block the MVP on advanced local computer vision.
+
+The important V1 outcome is that the user can select from generated image variants.
+
+---
+
+# 11. Data Model Requirements
+
+Create Supabase schema for the following tables.
+
+## drawing_categories
+
+Fields:
+
+* id
+* name
+* slug
+* description
+* icon
+* sort_order
+* created_at
+
+## drawing_items
+
+Fields:
+
+* id
+* category_id
+* title
+* slug
+* description
+* age_min
+* age_max
+* difficulty
+* thumbnail_url
+* final_image_url
+* trace_image_url
+* is_featured
+* is_placeholder
+* created_at
+
+## drawing_steps
+
+Fields:
+
+* id
+* drawing_item_id
+* step_number
+* title
+* instruction
+* image_url
+* created_at
+
+## anonymous_sessions
+
+Fields:
+
+* id
+* device_id
+* selected_age_range
+* created_at
+* last_seen_at
+
+## ai_generations
+
+Fields:
+
+* id
+* anonymous_session_id
+* input_type
+* original_prompt
+* safe_prompt
+* moderation_status
+* generation_status
+* provider
+* output_image_url
+* line_art_url
+* sketch_url
+* cartoon_url
+* coloring_page_url
+* error_message
+* created_at
+
+## uploaded_images
+
+Fields:
+
+* id
+* anonymous_session_id
+* original_image_url
+* processed_status
+* line_art_url
+* sketch_url
+* cartoon_url
+* coloring_page_url
+* created_at
+
+## local-only app data
+
+These can be stored on-device in V1:
+
+* favorites
+* recents
+* selected age range
+* last opened category
+
+Do not overcomplicate cloud sync in V1.
+
+---
+
+# 12. Storage Requirements
+
+Use Supabase Storage buckets.
+
+Recommended buckets:
+
+## drawing-assets
+
+For preloaded drawing thumbnails, final images, tracing images, and step images.
+
+## user-uploads
+
+For anonymous uploaded/captured images.
+
+## ai-generations
+
+For AI generated images and transformed outputs.
+
+Use signed URLs if needed.
+
+For V1, keep access simple but avoid exposing sensitive/private data.
+
+---
+
+# 13. Edge Functions
+
+Create Supabase Edge Functions or clearly documented server-side functions for AI operations.
+
+Required functions:
+
+## moderate-prompt
+
+Input:
+
+* prompt
+* age_range optional
+
+Output:
+
+* status: safe / rewritten / blocked
+* safe_prompt
+* user_message
+* reason_code
+
+## generate-image
+
+Input:
+
+* safe_prompt
+* age_range
+* style options
+
+Output:
+
+* image_url
+* generation_id
+* provider
+* status
+
+## transform-image
+
+Input:
+
+* image_url or uploaded file reference
+* style: line_art / sketch / cartoon / coloring_page
+
+Output:
+
+* output_image_url
+* style
+* status
+
+## process-uploaded-image
+
+Input:
+
+* uploaded image
+* requested styles
+
+Output:
+
+* original_url
+* line_art_url
+* sketch_url
+* cartoon_url
+* coloring_page_url
+* status
+
+Important:
+
+* All API keys must remain server-side.
+* Use environment variables/secrets.
+* Include mock fallback if API keys are missing.
+* Return clear errors to the app.
+* Do not expose raw provider errors to the child.
+
+---
+
+# 14. App Navigation
+
+Use bottom navigation.
+
+Recommended tabs:
+
+1. Home
+2. Explore
+3. Create
+4. Recents
+5. Preview / Projector
+
+Alternative:
+
+* Home
+* Library
+* Create
+* Favorites
+* Settings
+
+Keep it simple and child-friendly.
+
+---
+
+# 15. Core Screens
+
+## Splash / Loader
+
+Purpose:
+
+* show BloomDraw logo
+* playful animation
+* short loading state
+
+## Home Screen
+
+Show:
+
+* hero banner
+* age filter
+* featured lessons
+* quick create buttons
+* categories
+* recent creations
+* favorites preview
+
+## Explore / Library Screen
+
+Show:
+
+* category filters
+* age filters
+* difficulty filters
+* drawing grid
+* placeholder states
+* category cards
+
+## Drawing Detail Screen
+
+Show:
+
+* drawing preview
+* final drawing
+* trace version
+* step-by-step tutorial
+* age range
+* difficulty
+* favorite button
+* projector preview button
+
+## Step-by-Step Tutorial Screen
+
+Show:
+
+* step image
+* instruction
+* next/previous controls
+* progress indicator
+* final trace option
+
+## Create Screen
+
+Show options:
+
+* generate with AI prompt
+* upload from gallery
+* capture from camera
+* browse templates/cards
+
+## AI Prompt Screen
+
+Show:
+
+* prompt input
+* kid-safe helper examples
+* generate button
+* safety/loading states
+* generated image result
+* line-art result
+* projector preview button
+
+## Upload/Capture Screen
+
+Show:
+
+* camera/gallery options
+* selected image
+* processing states
+* output variants
+
+## Variant Selection Screen
+
+Show:
+
+* original
+* line art
+* pencil sketch
+* coloring page
+* cartoon
+* select one
+* favorite/save
+* open projector preview
+
+## Projector Preview Screen
+
+Show:
+
+* selected output full-screen
+* rotate
+* resize/zoom
+* brightness mode
+* high-contrast mode
+* outline mode if feasible
+* “connect projector coming soon”
+
+## Recents Screen
+
+Show:
+
+* recent creations
+* generated images
+* uploaded transformations
+* open again
+* delete/clear
+
+## Favorites Screen
+
+Show:
+
+* favorite preloaded drawings
+* open drawing
+* remove favorite
+
+## Settings Screen
+
+Show:
+
+* selected age range
+* AI safety note
+* app version
+* future account/login placeholder
+* privacy/safety placeholder
+
+---
+
+# 16. Design Direction
+
+Visual style:
+
+* playful
+* magical
+* clean
+* premium
+* parent-trustworthy
+* educational
+* high-wow-factor
+* not cheap/toyish
+* not overly childish
+
+UI language:
+
+* rounded cards
+* soft shadows
+* friendly colors
+* expressive icons
+* large touch targets
+* simple navigation
+* minimal text
+* kid-friendly empty states
+* delightful micro-animations
+
+Avoid:
+
+* clutter
+* too many settings
+* dark/scary styles
+* adult-looking AI interface
+* boring enterprise dashboard feel
+
+---
+
+# 17. Content Library Structure
+
+Seed the app with structured content.
+
+Create categories:
+
+1. Alphabets
+2. Numbers
+3. Animals
+4. Vehicles
+5. Space
+6. Nature
+7. Curriculum
+8. Cards
+
+Create approximately 100 drawing items.
+
+It is acceptable that many use placeholders, but the structure must support:
+
+* real thumbnail later
+* real final image later
+* real trace image later
+* real step images later
+
+Create at least 10–20 hero/example items with better detail if possible.
+
+Example hero items:
+
+* Letter A with apple
+* Number 1 with rocket
+* Cute elephant
+* Cat face
+* Dog
+* Butterfly
+* Car
+* Rocket
+* Tree
+* Flower
+* Mountain landscape
+* Sun and clouds
+* Mother’s Day card
+* Birthday card
+* School bus
+* Dinosaur
+* Fish
+* Moon and stars
+* Simple house
+* Cute robot
+
+---
+
+# 18. AI Safety UX
+
+If prompt is safe:
+
+* proceed to generation
+
+If prompt is unsafe:
+
+Show friendly message:
+
+“Let’s make something fun and safe to draw. Try asking for an animal, space scene, vehicle, flower, or cartoon character.”
+
+If prompt is rewritten:
+
+Show:
+
+“I made your idea a little more kid-friendly.”
+
+Then generate from safe rewritten prompt.
+
+Do not show scary/technical moderation explanations to children.
+
+---
+
+# 19. Success Criteria
+
+The MVP is successful if:
+
+1. A user can open the app and immediately understand what BloomDraw does.
+2. A user can browse categories and open drawing tutorials.
+3. Preloaded drawings show step-by-step instructions.
+4. A user can upload or capture an image.
+5. The app can generate/select line-art, sketch, coloring-page, and cartoon variants.
+6. A user can enter a prompt and get a kid-safe generated image.
+7. The generated image can produce a simplified line-art version.
+8. The app has favorites and recents.
+9. The projector preview mode makes the future hardware use case clear.
+10. The app feels beautiful, modern, fast, animated, and premium.
+11. Backend stores anonymous AI generation metadata.
+12. AI API keys are handled securely via environment variables/server-side functions.
+13. The app can run locally with mock fallback if keys are missing.
+14. The app is structured for eventual App Store and Android release.
+
+---
+
+# 20. Required Documentation to Create
+
+Create a /docs folder and write the following files:
+
+## /docs/00-product-brief.md
+
+Include:
+
+* product name
+* one-line description
+* target users
+* core problem
+* value proposition
+* MVP goal
+* target age groups
+* business goal
+* success criteria
+* assumptions
+* open questions
+
+## /docs/01-prd.md
+
+Include:
+
+* product overview
+* personas
+* user stories
+* MVP features
+* non-MVP features
+* acceptance criteria
+* edge cases
+* empty states
+* error states
+* launch criteria
+
+## /docs/02-user-flows.md
+
+Include:
+
+* first app open flow
+* age filter flow
+* content browsing flow
+* preloaded tutorial flow
+* upload/camera flow
+* AI generation flow
+* projector preview flow
+* favorites/recents flow
+* settings flow
+* error/recovery flows
+
+## /docs/03-technical-architecture.md
+
+Include:
+
+* stack
+* app architecture
+* folder structure
+* navigation structure
+* Supabase architecture
+* Edge Functions
+* AI provider abstraction
+* local storage
+* image processing pipeline
+* security considerations
+* future scalability
+
+## /docs/04-database-schema.md
+
+Include:
+
+* Supabase tables
+* fields
+* relationships
+* indexes
+* storage buckets
+* row-level security notes
+* seed data plan
+
+## /docs/05-api-contract.md
+
+Include:
+
+* Edge Function contracts
+* request/response formats
+* error formats
+* AI provider abstraction
+* mock fallback behavior
+
+## /docs/06-design-system.md
+
+Include:
+
+* visual direction
+* color palette proposal
+* typography proposal
+* spacing
+* cards
+* buttons
+* icons
+* animations
+* empty/error/loading states
+* accessibility notes
+
+## /docs/07-implementation-plan.md
+
+Include:
+
+* milestones
+* tasks
+* dependencies
+* files likely to change
+* acceptance criteria
+* verification steps
+
+## /docs/08-test-plan.md
+
+Include:
+
+* tests to run
+* manual flows
+* expected results
+* known limitations
+* device checks
+
+## /docs/09-deployment-runbook.md
+
+Include:
+
+* local setup
+* Supabase setup
+* Edge Function deployment
+* environment variables
+* EAS build setup
+* iOS/Android release notes
+
+## /docs/10-handoff.md
+
+Include:
+
+* what was built
+* files changed
+* how to run
+* how to configure Supabase
+* how to configure AI keys
+* tests run
+* known issues
+* next steps
+
+Also create/update:
+
+* README.md
+* .env.example
+* CLAUDE.md
+
+---
+
+# 21. Required CLAUDE.md
+
+Create CLAUDE.md with operating rules for the repo.
+
+It should include:
+
+* project goal
+* stack
+* engineering principles
+* no over-engineering rule
+* no non-MVP features rule
+* testing commands
+* AI safety rules
+* Supabase rules
+* secret handling rules
+* documentation update rules
+* app-store readiness notes
+
+---
+
+# 22. Implementation Order
+
+Build in this exact order.
+
+## Phase 1: Documentation
+
+1. Inspect repo.
+2. If no repo exists, plan new Expo app.
+3. Create /docs folder.
+4. Create product docs.
+5. Create technical docs.
+6. Create implementation plan.
+7. Create CLAUDE.md.
+
+Do not code before documentation is created.
+
+## Phase 2: Project Setup
+
+1. Create Expo React Native TypeScript project.
+2. Configure Expo Router.
+3. Configure styling system.
+4. Configure basic app layout.
+5. Configure app icons/placeholders if needed.
+6. Add README.
+7. Add .env.example.
+
+## Phase 3: App Shell
+
+1. Build splash/loader.
+2. Build bottom tab navigation.
+3. Build home screen.
+4. Build age filter.
+5. Build category cards.
+6. Build animated UI components.
+7. Build empty/loading/error components.
+
+## Phase 4: Content Library
+
+1. Create static/seed content structure.
+2. Create categories.
+3. Create 100 drawing item metadata entries.
+4. Create placeholder assets where needed.
+5. Create at least 10–20 hero drawing examples.
+6. Build Explore/Library screen.
+7. Build Drawing Detail screen.
+8. Build Step-by-Step Tutorial screen.
+
+## Phase 5: Local App State
+
+1. Implement age filter persistence.
+2. Implement favorites.
+3. Implement recents.
+4. Store local state with AsyncStorage.
+5. Add remove/clear actions.
+
+## Phase 6: Supabase Setup
+
+1. Add Supabase client.
+2. Create Supabase schema SQL files if possible.
+3. Create tables.
+4. Create storage bucket documentation.
+5. Add anonymous session handling.
+6. Add AI generation metadata storage.
+7. Add uploaded image metadata storage.
+
+## Phase 7: AI Edge Function Architecture
+
+1. Create Edge Function folder structure.
+2. Implement moderate-prompt function.
+3. Implement generate-image function.
+4. Implement transform-image function.
+5. Implement process-uploaded-image function.
+6. Add AI provider abstraction.
+7. Add mock provider fallback.
+8. Add environment variable handling.
+9. Add safe error handling.
+
+## Phase 8: AI Prompt Flow
+
+1. Build AI prompt screen.
+2. Add prompt examples.
+3. Add moderation request.
+4. Add safe rewrite behavior.
+5. Add image generation call.
+6. Add line-art version generation.
+7. Show loading state.
+8. Show safety blocked state.
+9. Show result screen.
+10. Save recent generation locally.
+11. Store metadata in Supabase if configured.
+
+## Phase 9: Upload/Camera Flow
+
+1. Add gallery picker.
+2. Add camera capture if feasible.
+3. Add selected image preview.
+4. Upload/process image.
+5. Generate style variants:
+
+   * line art
+   * pencil sketch
+   * coloring page
+   * cartoon
+6. Show variant selection screen.
+7. Save chosen variant to recents.
+8. Store metadata in Supabase if configured.
+
+## Phase 10: Projector Preview
+
+1. Build projector preview screen.
+2. Add full-screen preview.
+3. Add rotate.
+4. Add zoom/resize.
+5. Add brightness/high-contrast mode.
+6. Add paper preview if feasible.
+7. Add “connect projector coming soon” state.
+
+## Phase 11: Polish
+
+1. Add animations.
+2. Improve loading states.
+3. Improve error states.
+4. Improve empty states.
+5. Improve tablet layouts.
+6. Improve accessibility.
+7. Improve visual consistency.
+8. Remove dead code.
+
+## Phase 12: Testing and Fixing
+
+Run:
+
+* npm install
+* npm run lint if available
+* npm run typecheck if available
+* npm run test if available
+* npm run build or Expo equivalent
+* npx expo-doctor if available
+* Supabase function checks if available
+
+Fix all errors.
+
+If a command is missing, add it or document why it is not available.
+
+## Phase 13: Final Handoff
+
+1. Update README.
+2. Update docs.
+3. Update .env.example.
+4. Update handoff.
+5. List all completed features.
+6. List known limitations.
+7. List next recommended steps.
+8. Explain how to add real API keys.
+9. Explain how to run locally.
+10. Explain app-store build path.
+
+---
+
+# 23. Environment Variables
+
+Create .env.example with variables such as:
+
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_PROJECT_REF=
+
+OPENAI_API_KEY=
+REPLICATE_API_TOKEN=
+AI_PROVIDER=openai
+AI_MOCK_MODE=true
+
+EXPO_PUBLIC_APP_ENV=development
+
+Important:
+
+* EXPO_PUBLIC variables are visible in the mobile app.
+* Secret AI keys must not be exposed in the app bundle.
+* Secret keys must be used only in Supabase Edge Functions or secure backend context.
+* If secret keys are missing, app should use mock fallback.
+
+---
+
+# 24. Acceptance Criteria
+
+The build is acceptable only if:
+
+1. App opens successfully.
+2. Home screen is polished.
+3. Age filter works.
+4. Library categories are visible.
+5. Preloaded drawing items are visible.
+6. Step-by-step tutorial screen works for preloaded content.
+7. Favorites work locally.
+8. Recents work locally.
+9. AI prompt flow exists.
+10. Prompt moderation/safe rewrite flow exists.
+11. AI generation uses real API-ready architecture.
+12. Mock fallback works when keys are missing.
+13. Upload/gallery flow works.
+14. Image variant selection screen exists.
+15. Projector preview screen works.
+16. Supabase schema is documented/created.
+17. Anonymous generation metadata storage is implemented or clearly documented.
+18. No hardcoded secrets exist.
+19. App has loading states.
+20. App has error states.
+21. App has kid-safe blocked prompt UX.
+22. README explains setup.
+23. .env.example exists.
+24. Final handoff exists.
+
+---
+
+# 25. Quality Rules
+
+Do:
+
+* build simple and polished
+* use strong TypeScript
+* keep components reusable but not over-abstracted
+* keep UI delightful
+* protect API secrets
+* use mock fallback only when real keys are missing
+* document assumptions
+* build vertical slices
+* test after each milestone
+
+Do not:
+
+* build login in V1
+* build payments in V1
+* build hardware pairing in V1
+* create school dashboard in V1
+* overbuild backend
+* create fake AI without real API-ready path
+* hardcode secrets
+* copy competitor assets
+* use copyrighted online assets without permission
+* claim app-store/legal compliance without human review
+
+---
+
+# 26. Future Roadmap
+
+Document these as future phases only.
+
+## Phase 2 Future
+
+* login/auth
+* child profiles
+* cloud sync
+* subscription plans
+* hardware Bluetooth/Wi-Fi projector connection
+* parent dashboard
+* more content packs
+* AI-generated step-by-step tutorials
+* classroom mode
+* teacher dashboard
+* B2B school licensing
+* video tutorials
+* print/export mode
+* App Store / Play Store release polish
+* privacy/legal/compliance review for kids product
+
+---
+
+# 27. First Prompt to Start Work
+
+Use this exact instruction now:
+
+“Start by creating the documentation and implementation plan for BloomDraw based on this packet. Do not code until the required docs are created. After the docs are created, proceed automatically into implementation unless you identify a true blocker. Build one vertical slice at a time. Use Expo React Native, TypeScript, Expo Router, Supabase, and real API-ready AI Edge Functions with mock fallback. Do not build login, payments, or hardware pairing in V1. Keep the app beautiful, animated, premium, playful, educational, and kid-safe.”
+
+---
+
+# 28. Final Instruction
+
+You must continue until the product is documented, implemented, tested, fixed, and handed off.
+
+Do not stop after planning.
+
+If the last thing you write is a plan, execute the plan.
+
+If tests fail, fix them.
+
+If docs are stale, update them.
+
+If API keys are missing, use mock fallback and clearly document how to add real keys.
+
+If something is future scope, document it but do not build it.
+
+Build BloomDraw as a serious MVP app, not a toy demo.
