@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestone 1 (Project Setup) complete — Milestones 2–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records the documentation deliverable + the M1 setup.
+> Status: **Milestones 1–2 complete — Milestones 3–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records the documentation deliverable + the M1 setup + the M2 app shell.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation complete + **Milestone 1 (Project Setup) complete.** A bootable Expo + TypeScript + Expo Router app is scaffolded; no feature code yet.
-- **Awaiting:** explicit approval to proceed to **Milestone 2 (App shell)**.
+- **Phase:** Documentation + **Milestone 1 (Project Setup)** + **Milestone 2 (App Shell)** complete. The app boots through an animated splash → onboarding (first run) → bottom tabs; theme, shared components, and placeholder screens are in place. No real content/AI/Supabase/upload/projector logic yet.
+- **Awaiting:** explicit approval to proceed to **Milestone 3 (Content library)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -39,6 +39,46 @@
 - **npm audit:** 11 moderate advisories, all transitive in the Expo/Metro toolchain; not fixed (a forced fix risks breaking the SDK 56 dep set). Revisit during M11.
 - **React Compiler** experiment is enabled (template default) and the iOS bundle compiled fine with it on.
 
+## Milestone 2 — App Shell (✅ complete, 2026-06-15)
+
+**What was built**
+- **Provider shell** (`app/_layout.tsx`): GestureHandlerRootView + SafeAreaProvider + StatusBar; loads Baloo 2 + Nunito via `useFonts`; **splash gate** holds the native splash until fonts load + the store hydrates, then plays an animated in-app splash. A 2s fallback prevents hangs on slow/corrupt storage.
+- **Animated splash** (`BloomSplash`): gradient backdrop, "blooming" flower (scale + settle + pulse), wordmark fade-in, then fades out. **Reanimated used directly** (not Moti) — see decision below.
+- **Bottom tabs** (`app/(tabs)/_layout.tsx`): Home · Explore · Create · Recents · Settings (Ionicons), themed; gated on onboarding via `<Redirect>`.
+- **First-run onboarding** (`app/onboarding.tsx`): age picker (3–5 / 6–8 / 9–12) + "Skip for now" → defaults to 6–8. Persists locally (Zustand + AsyncStorage); no backend, no profiles.
+- **Home scaffold**: header + Demo-mode badge, gradient hero + CTA, functional age-filter chips, and PLACEHOLDER sections (featured row, category grid, quick-create, recents/favorites empty states, projector "coming soon" card).
+- **Explore / Create / Recents / Settings scaffolds**: placeholders (skeleton grid + "library coming soon"; create options as "coming soon" cards; recents empty state; Settings with **functional age band**, kid-safe AI note, version, and future Account/Privacy placeholders + a dev-only "Reset onboarding").
+- **Theme** (`src/theme`): `tokens.ts` (color/gradient/space/radius/shadow/typography), `theme.ts` (+ category accents), `fonts.ts`, `useTheme.ts` (responsive `isTablet`). No ThemeProvider context — theme is static (no over-engineering).
+- **State** (`src/state/useAppStore.ts`): age + onboarding, AsyncStorage-persisted, hydration-gated.
+- **13 shared components** (`src/components`): AppText, Button, Card, Chip, AgeFilter, SectionHeader, EmptyState, ErrorState, Loader, SkeletonCard, DemoModeBadge, Screen, BloomSplash (+ `index.ts` barrel).
+- **Copy** centralized in `src/lib/strings.ts`; shell placeholder data in `src/lib/placeholders.ts`.
+
+**Dependencies added in M2**
+`@expo-google-fonts/baloo-2`, `@expo-google-fonts/nunito`, `@expo/vector-icons ^15.1.1` (the SDK 56 template ships SF Symbols, not vector-icons — added for tab/UI icons).
+
+**Animation decision (Moti vs Reanimated 4):** Moti (`0.30.0`, peer `reanimated: "*"`) installed cleanly, but its runtime compatibility with **Reanimated 4** can't be verified here without a device. To guarantee a stable splash/gate and shell, **M2 uses Reanimated 4 directly** (`useSharedValue`, `withTiming/Sequence/Repeat`, `FadeInDown` layout animations). Moti remains installed and can be adopted for declarative micro-animations once validated on a device (M10). This matches the milestone instruction ("if Moti causes risk, use Reanimated directly and document").
+
+**Commands run & results (M2)**
+| Command | Result |
+| --- | --- |
+| `npx expo install @expo-google-fonts/baloo-2 @expo-google-fonts/nunito` | ✅ |
+| `npx expo install @expo/vector-icons` | ✅ `15.1.1` (fixed an export-time resolve error) |
+| `npx expo export -p ios` | ✅ bundled (4.1MB Hermes bundle) — app compiles |
+| `npm run lint` | ✅ exit 0, no findings |
+| `npm run typecheck` | ✅ exit 0 (after typed-routes regen — see note) |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npm run start` (Metro) | ✅ "Waiting on http://localhost:8087" |
+
+**Issues hit & fixed during M2**
+- **`@expo/vector-icons` missing** → iOS export failed resolving the import. Fixed by `expo install @expo/vector-icons`; re-export passed.
+- **Typed-routes typecheck error** (`/create`, `/explore`, `/onboarding` not assignable): `.expo/types/router.d.ts` was stale from M1 (only knew `/`). `expo export` does not regenerate it; the **dev server does**. Booted Metro once to regenerate, then typecheck passed. Note: `.expo/types` is git-ignored and regenerated on `expo start`; on a fresh clone (no `.expo`) expo-router's `Href` is permissive so `tsc` still passes — run the app once for strict route typing.
+
+**Warnings / unresolved (non-blocking)**
+- Node engine `EBADENGINE` (RN 0.85 prefers Node ≥22.13; on 22.12) — carried over from M1.
+- Moti-on-Reanimated-4 runtime compatibility unverified (deferred; Reanimated used directly) — see decision above.
+- Visual polish (real animations beyond entrances, tablet fine-tuning, a11y audit) is intentionally deferred to **Milestone 10**.
+- Not run on a physical device/simulator in this environment; validated via Metro boot + iOS bundle export. Recommend a quick simulator pass when available.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -67,12 +107,29 @@ README.md               (updated: status + pinned versions + layout)
 docs/10-handoff.md      (updated: this M1 section)
 ```
 
-## How to run (current — Milestone 1)
+**Milestone 2 — App Shell (new/added):**
+```
+app/_layout.tsx                         (rewritten: provider shell + fonts + splash gate)
+app/index.tsx                           (removed — Home moved into the tabs group)
+app/onboarding.tsx                      (new — first-run age picker)
+app/(tabs)/_layout.tsx                  (new — bottom tabs + onboarding redirect)
+app/(tabs)/{index,explore,create,recents,settings}.tsx   (new — Home + 4 scaffolds)
+src/theme/{tokens,theme,fonts,useTheme}.ts               (new)
+src/state/useAppStore.ts                                 (new)
+src/lib/{strings,placeholders}.ts                        (new)
+src/types/index.ts                                       (new)
+src/components/*.tsx (13 components) + index.ts          (new)
+src/{components,theme,state,lib,types}/.gitkeep          (removed — folders now have real files)
+package.json / package-lock.json        (fonts, @expo/vector-icons)
+README.md / docs/10-handoff.md          (updated for M2)
+```
+
+## How to run (current — Milestone 2)
 See `09-deployment-runbook.md` §2.
 ```bash
 npm install && cp .env.example .env && npm run start   # then press i / a, or scan with Expo Go
 ```
-Boots to a placeholder Home screen. (Node ≥ 22.13 recommended — see README.)
+First launch → animated splash → age-picker onboarding → bottom tabs. Returning launches go straight to tabs. (Node ≥ 22.13 recommended — see README.) Use Settings → "Reset onboarding (dev)" to replay the first-run flow.
 
 ## How to configure Supabase
 See `09-deployment-runbook.md` §3–§4 and `04-database-schema.md`. Summary: create project → `supabase link` → `db push` migrations → run `seed.sql` → create buckets → set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`.
@@ -91,7 +148,9 @@ supabase functions deploy moderate-prompt generate-image transform-image process
 Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (or `AI_MOCK_MODE=true`), the app uses the mock provider. Record the **exact model IDs used** here after the real-key smoke test.
 
 ## Tests run
-- **Milestone 1 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (strict, 0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (bundle compiles). The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
+- **Milestone 1 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (strict, 0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (bundle compiles).
+- **Milestone 2 checks (all pass):** `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (4.1MB bundle compiles).
+- The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
 Anonymous uploaded images and AI-generated images (plus their metadata/prompts) are retained for **30 days by default** (`DATA_RETENTION_DAYS`, configurable), then purged from Postgres and Storage by a scheduled job. Content tables are retained. Full policy: `04-database-schema.md` §9; setup: `09-deployment-runbook.md` §4 "Data retention purge". Confirm/adjust the window with the owner before a real-key pilot.
@@ -111,8 +170,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 2 (App shell).** (Milestone 1 is complete.)
-2. Execute Milestones 2→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 3 (Content library).** (Milestones 1–2 are complete.)
+2. Execute Milestones 3→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

@@ -1,11 +1,11 @@
 # BloomDraw 🌸✏️
 
-> **Milestone 1 (Project Setup) complete.** A bootable Expo + TypeScript + Expo Router app is scaffolded. Feature work (app shell, content, AI, etc.) begins at Milestone 2, pending approval.
+> **Milestones 1–2 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, first-run age onboarding, themed bottom tabs, and polished placeholder screens. Real content/AI/Supabase/upload/projector logic begins at Milestone 3, pending approval.
 
 **BloomDraw** is an AI-powered drawing companion for kids (ages 3–12) that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences. Built for parents and gift-buyers as a premium, kid-safe creative-learning app — and as the software companion to a future BloomDraw drawing **projector**.
 
 ## Status
-🟢 **Milestone 1 complete** — bootable Expo app scaffolded (Expo Router, strict TS, planned folder structure, all M1 dependencies). All checks pass (lint, typecheck, expo-doctor 18/18, Metro boots, JS bundle exports). 🟡 Milestones 2–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
+🟢 **Milestones 1–2 complete** — project setup + app shell (animated splash, age onboarding, 5 themed tabs, design system, 13 shared components, placeholder screens). All checks pass (lint, typecheck, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 3–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
 
 ## What it does (V1 / MVP)
 - 📚 Browse a library of ~100 guided drawings across 8 categories (Alphabets, Numbers, Animals, Vehicles, Space, Nature, Curriculum, Cards).
@@ -39,6 +39,7 @@ Toolchain at setup: **Node v22.12.0**, npm 10.9.0. (RN 0.85.3 prefers Node ≥ 2
 | expo-file-system | `~56.0.8` | | expo-font | `~56.0.7` |
 | expo-haptics | `~56.0.3` | | expo-crypto | `~56.0.4` |
 | expo-linear-gradient | `~56.0.4` | | expo-status-bar | `~56.0.4` |
+| @expo/vector-icons | `^15.1.1` | | @expo-google-fonts/baloo-2 · nunito | latest |
 | eslint | `^9.0.0` | | eslint-config-expo | `~56.0.4` |
 
 > Full, exact lockfile lives in `package-lock.json`. Versions follow Expo SDK 56's recommended set (installed via `expo install`).
@@ -70,9 +71,18 @@ Today this boots to a placeholder Home screen (Milestone 1). As features land, w
 
 ## Repository layout
 ```
-app/         Expo Router routes (root convention). M1: _layout.tsx + index.tsx (placeholder Home)
-src/         components · theme · state · services · content · lib · types  (M1: empty scaffolding, filled M2+)
-supabase/    migrations · functions/{_shared,moderate-prompt,generate-image,transform-image,process-uploaded-image}  (M1: empty scaffolding)
+app/         Expo Router routes (root convention)
+  _layout.tsx            provider shell + fonts + splash gate
+  onboarding.tsx         first-run age picker
+  (tabs)/                Home · Explore · Create · Recents · Settings
+src/
+  theme/                 tokens · theme · fonts · useTheme
+  components/            13 shared UI components (+ index barrel)
+  state/                 useAppStore (age + onboarding, persisted)
+  lib/                   strings · placeholders
+  types/                 shared types
+  services · content/    (empty — filled in M3/M5)
+supabase/    migrations · functions/{_shared,moderate-prompt,generate-image,transform-image,process-uploaded-image}  (empty scaffolding)
 assets/      icons · splash · placeholder art  (Expo placeholder icons until brand pass)
 docs/        product + technical documentation (source of truth)
 app.json · tsconfig.json · eslint.config.js · package.json · .env.example · CLAUDE.md
