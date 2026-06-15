@@ -41,6 +41,36 @@ export const strings = {
     subtitle: 'Turn ideas, photos, and prompts into art',
     comingSoon: 'Coming soon',
   },
+  ai: {
+    title: 'Make art with AI',
+    subtitle: "Type an idea and we'll draw it — always kept kid-safe.",
+    inputPlaceholder: 'A cute elephant astronaut on the moon…',
+    inputLabel: 'Your drawing idea',
+    examplesLabel: 'Need an idea? Tap one:',
+    generate: 'Make my drawing',
+    ageLabel: 'Drawing for ages',
+    // Loading phases (docs/02 §6).
+    moderating: 'Checking that your idea is safe and fun…',
+    generating: 'Making your drawing…',
+    longRunning: 'Still adding a little magic…',
+    // Result screen.
+    resultTitle: 'Your drawing',
+    lineArtTitle: 'Trace-ready line art',
+    yourIdea: 'Your idea',
+    kidFriendlyIdea: 'Kid-friendly idea',
+    tryAgain: 'Try another idea',
+    saved: 'Saved to your recents',
+    projectorCta: 'Projector Preview',
+    notFound: "We couldn't find that creation.",
+    // Tappable kid-safe example prompts.
+    examples: [
+      'cute elephant astronaut on the moon',
+      'friendly dragon in a magical forest',
+      'rocket flying past the moon',
+      'butterfly in a flower garden',
+      'happy robot drawing stars',
+    ],
+  },
   recents: {
     title: 'Recents',
   },

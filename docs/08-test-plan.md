@@ -29,6 +29,7 @@ If a script is missing it must be added in M1/M11 or its absence documented with
 - **Rate limiting & caps:** real-mode per-device counter returns `rate_limited` at `AI_RATE_LIMIT_PER_DAY`; global counter returns `global_limit_reached` at `AI_GLOBAL_DAILY_LIMIT`; per-device is checked before global; mock mode never counts/limits; `moderate-prompt` not separately limited; provider 429 maps to `rate_limited`; spend-cap (`AI_GLOBAL_DAILY_SPEND_CAP_USD`) is provider-budget integration (count cap enforced first).
 - **Model-ID config:** provider model IDs resolve from env/config (with defaults), not from hardcoded literals.
 - **Timeout handling:** a simulated slow/aborted request maps to `provider_unavailable` → "nap" retry copy; client aborts at the configured ceiling (no infinite wait); mock returns promptly.
+- **AI prompt orchestration (M7, `src/services/ai.ts`):** safe path moderates → generates with the safe prompt → saves a recent; rewritten path uses `safePrompt` + flags the banner; blocked path returns blocked and does **not** call generate or save; empty/oversized prompt rejected before moderating; `EdgeError`/unknown errors normalize to child-safe messages with no detail leak; client falls back to the local demo mock when Supabase is unconfigured.
 
 ## 3. Manual test flows (scripted)
 Run on at least **one iOS** and **one Android** target. Record pass/fail + notes.

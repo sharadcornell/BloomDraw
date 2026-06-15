@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–6 complete — Milestones 7–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions.
+> Status: **Milestones 1–7 complete — Milestones 8–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1–M5** + **M6 (AI Edge Functions)** complete. The app boots → splash → onboarding → tabs, browses content, and persists local state. The **AI backend foundation** is now in place: four Deno Edge Functions (`moderate-prompt`, `generate-image`, `transform-image`, `process-uploaded-image`), a provider-agnostic `AIProvider` (OpenAI / Replicate / **Mock**), deterministic mock fallback, prompt moderation (safe / rewritten / blocked), per-device + global rate limiting (real mode), child-safe error handling, and service-role DB writes — all server-side; **no secret ever reaches the app bundle.** **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No mobile AI/upload/projector UI yet (M7–M9).
-- **Awaiting:** explicit approval to proceed to **Milestone 7 (AI prompt flow — mobile UI)**.
+- **Phase:** Documentation + **M1–M6** + **M7 (AI Prompt Flow)** complete. The app boots → splash → onboarding → tabs, browses content, persists local state, and now runs the **full mobile AI creation flow**: Create → AI Prompt → moderate → generate → AI Result (image + line art) → saved to recents (reopenable). Prompt moderation drives safe / **rewritten (banner)** / **blocked** states; friendly loading/long-running/timeout/error copy throughout; **demo/mock works with zero keys** (deterministic placeholder art + Demo badge). The M6 Edge Functions back it; the client never touches secrets or Deno code. **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No upload/camera UI yet (M8); no projector controls (M9).
+- **Awaiting:** explicit approval to proceed to **Milestone 8 (Upload / camera flow)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -236,6 +236,43 @@
 - OpenAI/Replicate real paths (image generation/edits, prediction polling) are **API-ready but unverified without keys**; the exact request shapes + **model IDs** must be confirmed at the real-key pilot.
 - Real generated/transformed outputs are returned as the provider URL/`b64` in V1; persisting them to the private `ai-generations` bucket + short-TTL signed URLs is a pre-pilot task.
 
+## Milestone 7 — AI Prompt Flow (✅ complete, 2026-06-15)
+
+**What was built** — the mobile AI creation flow (prompt → safety → image), wired to the M6 Edge Functions. Upload/camera (M8) and projector controls (M9) are intentionally NOT built here.
+
+- **Client Edge service** (`src/services/edge.ts`): typed callers `moderatePrompt` + `generateImage` returning the `docs/05` envelopes. Configured → invokes the real Edge Functions via the **anon** Supabase client, sending `x-device-id` for rate-limit accounting; unconfigured / `FORCE_MOCK` (`supabase===null`) → local demo equivalent. Failures normalize to a typed **`EdgeError { code, userMessage, retryable }`** carrying ONLY the child-safe message (no provider/stack/moderation detail). **No Deno/server code imported; no secrets in the app.** (transform/process callers land in M8.)
+- **Demo fallback** (`src/services/aiMock.ts`): client mirror of the server mock — a lightweight `mockModerate` (safe/rewritten/blocked) + deterministic `mockGenerate` (SVG-data-URL image + line art, `demo:true`). The authoritative classifier is the Edge Function; this is the offline/demo mirror. Child copy stays single-source in `src/lib/strings.ts`.
+- **Orchestration** (`src/services/ai.ts`): `createAiArt()` = validate → moderate → (**blocked** → stop, no generate | **rewritten** → banner + use safePrompt | **safe** → use prompt) → generate (image + line art) → save a `RecentCreation`. Fully **dependency-injected → unit-tested** without Supabase/network. Plus `isValidPrompt` (1–300) and `titleFromPrompt`.
+- **Hook** (`src/hooks/useAiGeneration.ts`): UI state machine (`idle`/`moderating`/`generating`/`blocked`/`error`), the rewrite flag, and a long-running timer (6s → "Still adding a little magic…").
+- **Screens:**
+  - **`app/create/ai.tsx`** — title + explanation, prompt input (300-char cap + counter), **5 kid-safe example chips**, age passed to moderation/generation, Generate (disabled when empty/loading), and inline **loading / safety-check / long-running / blocked / error** states with child-safe copy.
+  - **`app/create/ai-result.tsx`** — generated image + simplified line art (via `AiArtView`), Demo badge when `demo:true`, original idea + kid-friendly idea (when rewritten) + rewrite banner, "saved to recents" indicator, **Try another idea**, Back to Create, and a Projector "coming soon" card (no real preview — that's M9). Reads the saved recent by `id` (also how Recents/Home reopen it).
+- **Components:** `AiArtView` (renders real http images via `expo-image`; renders a branded deterministic placeholder for demo/data-URL results — native loaders don't reliably render SVG data URLs), `Banner` (gentle info/success notice), and `RecentCard` updated to show a real http thumbnail when present (else the emoji placeholder).
+- **Recents integration:** a successful generation saves an `ai_generation` `RecentCreation` (id, createdAt, title, prompt, safePrompt, rewritten, imageUrl, lineArtUrl, provider, demo, + http thumbnail). Recents + Home now **reopen the AI Result** for `ai_generation` items. `RecentCreation` gained optional AI fields (all optional → backwards-safe; `sanitizeRecents` unchanged).
+- **Loading / timeout / error UX:** moderation → "Checking that your idea is safe and fun…"; generation → "Making your drawing…"; long-running → "Still adding a little magic…"; provider timeout/failure → "Our art helper is taking a quick nap…"; global cap → "Our art helper is resting for now…"; per-device limit → the Edge `rate_limited` message. **No raw provider/stack/moderation/cost detail ever shown to the child.**
+- **Demo/mock mode:** with no Supabase env / no keys / `FORCE_MOCK`, the full flow completes — deterministic placeholder image + line art render, Demo badge shows, result saves to recents. Verified by unit tests.
+- **Narration (§8):** **deferred to Milestone 10.** `expo-speech` is not installed; adding+wiring it now would add dependency/scope risk against the milestone's "not a blocker / defer if risky" guidance. Documented as deferred (docs/02 §11, docs/06 §12).
+
+**Engineering notes:** the client↔server boundary is clean — moderation logic is intentionally NOT shared across the Deno/RN boundary (a file in `src/` is app-`tsc`-checked and can't use the `.ts` import extensions Deno requires; the M6 `_shared` modules are excluded from app tsc). The client demo classifier is a small, documented mirror; the real safety bar is the Edge Function. Route types (`.expo/types`) were regenerated by booting Metro once (typed-routes pattern from M2/M3).
+
+**Tests (`src/services/__tests__/`)** — +17 (3 suites): `ai.test.ts` (validation, safe/rewritten/blocked orchestration, blocked does NOT call generate or save, recents entry added, EdgeError + unknown-error normalization, no detail leak, phase sequence), `aiMock.test.ts` (mock moderation safe/rewrite/block + generation determinism/`demo:true`), `edge.test.ts` (Supabase-unconfigured fallback → local mock; EdgeError normalization). **Total suite 103/103.**
+
+**Commands run & results (M7)**
+| Command | Result |
+| --- | --- |
+| `npm test` | ✅ **103/103** (14 suites; +17 AI-flow tests) |
+| `npm run lint` | ✅ exit 0, no findings |
+| `npm run typecheck` | ✅ exit 0 (after typed-routes regen via Metro) |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npm run start` (Metro) | ✅ "Waiting on http://localhost:8081" (regenerated route types) |
+| `npx expo export -p ios` | ✅ bundled (5.0MB Hermes bundle) |
+
+**Warnings / unresolved (non-blocking, M7)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- **Offline detection is pragmatic** (no `@react-native-community/netinfo` dependency): when configured-but-offline, the real invoke is attempted and its transport failure is caught → mapped to the child-safe "nap" retry. Precise "don't even attempt while offline" + the distinct "You're offline right now…" copy (T19) is a small follow-up (add netinfo) — documented, not blocking the mock build.
+- Real provider image URLs are shown directly (M6 note); persisting to the private `ai-generations` bucket + signed URLs remains a pre-pilot task.
+- Not run on a device/simulator here; validated via Metro boot + iOS export + unit tests. Recommend a quick simulator pass of the safe/rewrite/block prompts when available.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -243,7 +280,7 @@ Documentation set under `/docs` plus root config drafts:
 - `README.md` (draft)
 - `.env.example` (draft)
 
-App shell, content library, local state, the Supabase foundation (M5), and the AI Edge Functions (M6) are **implemented**. Remaining feature code — mobile AI prompt flow (M7), upload/camera (M8), projector preview (M9), polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
+App shell, content library, local state, the Supabase foundation (M5), the AI Edge Functions (M6), and the mobile AI prompt flow (M7) are **implemented**. Remaining feature code — upload/camera (M8), projector preview (M9), polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
 
 ## Files changed
 
@@ -356,13 +393,31 @@ docs/09-deployment-runbook.md (updated — Edge runtime notes + AI_PROVIDER_TIME
 README.md / docs/10-handoff.md (updated for M6)
 ```
 
-## How to run (current — Milestone 6)
+**Milestone 7 — AI Prompt Flow (new/added):**
+```
+app/create/ai.tsx · app/create/ai-result.tsx            (new — AI Prompt + Result screens)
+src/services/edge.ts                                    (new — typed Edge callers + EdgeError)
+src/services/aiMock.ts                                  (new — client demo fallback)
+src/services/ai.ts                                      (new — createAiArt orchestration + validation)
+src/hooks/useAiGeneration.ts                            (new — UI state machine)
+src/components/AiArtView.tsx · Banner.tsx               (new) + components/index.ts (barrel)
+src/services/__tests__/{ai,aiMock,edge}.test.ts         (new — 17 tests)
+src/types/index.ts            (updated — RecentCreation optional AI fields; backwards-safe)
+src/lib/strings.ts            (updated — `ai` flow copy)
+src/components/RecentCard.tsx (updated — real http thumbnail; else emoji)
+app/(tabs)/create.tsx         (updated — AI option navigates to /create/ai)
+app/(tabs)/recents.tsx · app/(tabs)/index.tsx  (updated — reopen AI Result for ai_generation)
+README.md / docs/10-handoff.md (updated for M7)
+```
+
+## How to run (current — Milestone 7)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
-npm test                                               # content + seed + state + services + edge fns (86 tests)
+npm test                                               # content + seed + state + services + edge fns + AI flow (103 tests)
 npm run seed:gen                                       # regenerate supabase/seed.sql from src/content
 ```
+Try the AI flow with zero backend: **Create → Generate with AI → type/tap an idea → Make my drawing.** A safe idea draws a demo image + line art (Demo badge); "dragon fighting with blood" shows the kid-friendly rewrite banner; a clearly-unsafe idea shows the block message. Results save to **Recents** (reopenable).
 To enable the backend: set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`, apply migrations + `seed.sql` to a Supabase project (docs/09 §3). To serve/deploy the **Edge Functions** (needs Deno + Supabase CLI): `supabase functions serve` (smoke in mock mode) → `supabase functions deploy <name>` (docs/09 §4). (Node ≥ 22.13 recommended.)
 
 ## How to configure Supabase
@@ -388,6 +443,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 4 checks (all pass):** `npm test` (**22/22** — content + state), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,686 modules).
 - **Milestone 5 checks (all pass):** `npm test` (**32/32** — content + seed + state + services), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,756 modules), `npm run seed:gen` (seed generated). Supabase CLI not run locally (no project) — commands documented for later.
 - **Milestone 6 checks (all pass):** `npm test` (**86/86** — +54 Edge-Function tests across 7 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors; `supabase/functions` excluded — Deno-typed), `npx expo-doctor` (18/18), `npx expo export -p ios` (4.9MB bundle; server code excluded). Deno + Supabase CLI not installed → `deno check` / `supabase functions serve` smoke documented for later (docs/09 §4).
+- **Milestone 7 checks (all pass):** `npm test` (**103/103** — +17 AI-flow tests across 3 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Not run on a device/simulator here.
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -408,8 +464,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 7 (AI prompt flow — mobile UI: prompt screen → moderate → generate image + line art → result → recents).** (Milestones 1–6 are complete; the AI Edge Functions + mock fallback are ready for the UI to call.)
-2. Execute Milestones 7→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 8 (Upload / camera flow: pick/capture → preprocess → `process-uploaded-image`/`transform-image` → Variant Selection → recents).** (Milestones 1–7 are complete; the M7 patterns — client edge service, demo fallback, loading/error states, recents — are reused.)
+2. Execute Milestones 8→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

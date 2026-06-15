@@ -61,6 +61,19 @@ export type RecentCreation = {
   style?: string;
   /** For `preloaded_drawing`, the drawing item slug to re-open. */
   slug?: string;
+  // --- AI generation context (Milestone 7; all optional → backwards-safe) ---
+  /** The kid-safe prompt actually sent to generation (rewritten when softened). */
+  safePrompt?: string;
+  /** true when the prompt was gently rewritten by moderation. */
+  rewritten?: boolean;
+  /** Generated image (http URL in real mode, data URL in mock). */
+  imageUrl?: string;
+  /** Simplified line-art version. */
+  lineArtUrl?: string | null;
+  /** Provider that produced it (`openai` | `replicate` | `mock`). */
+  provider?: string;
+  /** true when produced by the mock provider → app shows the Demo badge. */
+  demo?: boolean;
 };
 
 export type DrawingItem = {

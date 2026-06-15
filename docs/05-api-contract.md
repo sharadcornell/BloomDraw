@@ -228,6 +228,8 @@ processUploadedImage(input): Promise<ProcessData>
 ```
 Each returns `data` on `ok:true` or throws a typed `EdgeError { code, userMessage, retryable }` the UI maps to the error states in `01-prd.md` §9.
 
+> **Implementation status:** `moderatePrompt` + `generateImage` ship in **Milestone 7** (AI prompt flow); `transformImage` + `processUploadedImage` ship in **Milestone 8** (upload/camera flow). The app-side orchestration (`createAiArt`) and the offline/demo mirror live in `src/services/ai.ts` + `src/services/aiMock.ts`. The client never imports server/Deno code and never reads a secret (anon key only; `x-device-id` is sent for rate-limit accounting).
+
 **Connectivity rules:**
 - **Supabase unconfigured** → the layer short-circuits to a local mock equivalent so the app still runs (mirrors server mock); all flows demoable.
 - **Configured but offline** → the layer detects no connectivity and **does not attempt the real provider**; it raises an offline error mapped to "You're offline right now. You can still draw from the library!" (or the nap message) + Retry. **Never silently call the real provider when offline.** Library/favorites/recents continue from local data.

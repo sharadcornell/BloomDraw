@@ -1,6 +1,8 @@
 export { AgeFilter } from './AgeFilter';
+export { AiArtView } from './AiArtView';
 export { AppText } from './AppText';
 export { BackHeader } from './BackHeader';
+export { Banner } from './Banner';
 export { BloomSplash } from './BloomSplash';
 export { Button } from './Button';
 export { Card } from './Card';

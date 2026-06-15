@@ -183,7 +183,13 @@ export default function HomeScreen() {
               <View key={item.id} style={styles.hCard}>
                 <RecentCard
                   item={item}
-                  onPress={() => item.slug && router.push(`/drawing/${item.slug}`)}
+                  onPress={() => {
+                    if (item.type === 'ai_generation') {
+                      router.push({ pathname: '/create/ai-result', params: { id: item.id } });
+                    } else if (item.slug) {
+                      router.push(`/drawing/${item.slug}`);
+                    }
+                  }}
                 />
               </View>
             ))}

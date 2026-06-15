@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { theme } from '@/theme/theme';
@@ -7,6 +8,10 @@ import type { RecentCreation, RecentType } from '@/types';
 import { AppText } from './AppText';
 import { Card } from './Card';
 import { DrawingThumbnail } from './DrawingThumbnail';
+
+function isHttp(url?: string | null): url is string {
+  return !!url && /^https?:\/\//i.test(url);
+}
 
 const TYPE_META: Record<RecentType, { label: string; emoji: string; accent: string }> = {
   ai_generation: { label: 'AI art', emoji: '✨', accent: theme.color.brand.violet },
@@ -34,7 +39,16 @@ export function RecentCard({ item, onPress, onRemove, style }: Props) {
     >
       <Card padded={false}>
         <View>
-          <DrawingThumbnail emoji={item.emoji ?? meta.emoji} accent={meta.accent} height={110} />
+          {isHttp(item.thumbnailUrl) ? (
+            <Image
+              source={{ uri: item.thumbnailUrl }}
+              style={styles.thumb}
+              contentFit="cover"
+              accessibilityLabel={item.title}
+            />
+          ) : (
+            <DrawingThumbnail emoji={item.emoji ?? meta.emoji} accent={meta.accent} height={110} />
+          )}
           {onRemove ? (
             <Pressable
               onPress={onRemove}
@@ -72,4 +86,5 @@ const styles = StyleSheet.create({
     ...theme.shadow.e1,
   },
   body: { padding: theme.space.md, gap: theme.space.xs },
+  thumb: { width: '100%', height: 110, backgroundColor: theme.color.bg.subtle },
 });

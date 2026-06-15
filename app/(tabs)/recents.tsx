@@ -7,6 +7,7 @@ import { strings } from '@/lib/strings';
 import { useRecentsStore } from '@/state';
 import { theme } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
+import type { RecentCreation } from '@/types';
 
 /** Recents — local creations (AI/upload flows populate this in M7–M8). */
 export default function RecentsScreen() {
@@ -16,6 +17,15 @@ export default function RecentsScreen() {
   const removeRecentCreation = useRecentsStore((s) => s.removeRecentCreation);
   const clearRecents = useRecentsStore((s) => s.clearRecents);
   const cardWidth = isTablet ? '31.5%' : '47.5%';
+
+  const openRecent = (item: RecentCreation) => {
+    if (item.type === 'ai_generation') {
+      router.push({ pathname: '/create/ai-result', params: { id: item.id } });
+    } else if (item.type === 'preloaded_drawing' && item.slug) {
+      router.push(`/drawing/${item.slug}`);
+    }
+    // uploaded_image reopen arrives with the upload flow (Milestone 8).
+  };
 
   const confirmClear = () => {
     Alert.alert('Clear recents?', 'This removes your recent creations from this device.', [
@@ -44,7 +54,7 @@ export default function RecentsScreen() {
             <View key={item.id} style={{ width: cardWidth }}>
               <RecentCard
                 item={item}
-                onPress={() => item.slug && router.push(`/drawing/${item.slug}`)}
+                onPress={() => openRecent(item)}
                 onRemove={() => removeRecentCreation(item.id)}
               />
             </View>
