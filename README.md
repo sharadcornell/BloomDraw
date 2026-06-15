@@ -1,11 +1,11 @@
 # BloomDraw 🌸✏️
 
-> **Milestones 1–5 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, age onboarding, themed tabs, a **content library** (8 categories, ~100 drawings / 20 heroes, Explore filters, Detail, 4/6/8-step tutorials), **persistent local state** (age, favorites, recents), and a **Supabase foundation** (guarded offline-safe client, migrations, generated seed, anonymous session + storage services). The app runs fully in local/mock mode without Supabase. AI Edge Functions / upload / projector begin at Milestone 6+, pending approval.
+> **Milestones 1–6 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, age onboarding, themed tabs, a **content library** (8 categories, ~100 drawings / 20 heroes, Explore filters, Detail, 4/6/8-step tutorials), **persistent local state** (age, favorites, recents), a **Supabase foundation** (guarded offline-safe client, migrations, generated seed, anonymous session + storage services), and the **AI Edge Functions** (four Deno functions + provider-agnostic `AIProvider` with OpenAI/Replicate/**Mock**, prompt moderation, rate limiting, child-safe errors — all server-side, no secrets in the bundle). The app runs fully in local/mock mode without Supabase or AI keys. The mobile AI/upload/projector UI begins at Milestone 7+, pending approval.
 
 **BloomDraw** is an AI-powered drawing companion for kids (ages 3–12) that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences. Built for parents and gift-buyers as a premium, kid-safe creative-learning app — and as the software companion to a future BloomDraw drawing **projector**.
 
 ## Status
-🟢 **Milestones 1–5 complete** — project setup + app shell + content library + local state + Supabase foundation (guarded client, migrations, generated seed, session/storage services). All checks pass (lint, typecheck, **32/32 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 6–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
+🟢 **Milestones 1–6 complete** — project setup + app shell + content library + local state + Supabase foundation + **AI Edge Functions** (4 Deno functions, `AIProvider` abstraction, mock fallback, moderation, rate limiting, child-safe errors). All checks pass (lint, typecheck, **86/86 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 7–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
 
 ## What it does (V1 / MVP)
 - 📚 Browse a library of ~100 guided drawings across 8 categories (Alphabets, Numbers, Animals, Vehicles, Space, Nature, Curriculum, Cards).
@@ -63,8 +63,9 @@ Today this boots to a placeholder Home screen (Milestone 1). As features land, w
 | `npm run lint` | ESLint (`eslint .`) | ✅ M1 |
 | `npm run typecheck` | `tsc --noEmit` (strict) | ✅ M1 |
 | `npx expo-doctor` | Expo health check | ✅ M1 |
-| `npm run test` | Jest unit tests (jest-expo) — content + seed + state + services (32 tests) | ✅ M3–M5 |
+| `npm run test` | Jest unit tests (jest-expo) — content + seed + state + services + edge functions (86 tests) | ✅ M3–M6 |
 | `npm run seed:gen` | Regenerate `supabase/seed.sql` from `src/content` (source of truth) | ✅ M5 |
+| `supabase functions serve` | Serve the 4 Edge Functions locally (mock mode) — needs Deno + Supabase CLI | 📋 M6 (docs/09 §4) |
 
 ## Configuration
 - App-public config via `EXPO_PUBLIC_*` (Supabase URL + anon key + app env).
@@ -86,7 +87,8 @@ src/
   services/              supabase (guarded client) · session · storage  (offline-safe)
   types/db.ts            DB row types + enums + Database (separate from app types)
 scripts/     generate-seed.ts (npm run seed:gen)
-supabase/    migrations/{0001_init,0002_rls,0003_storage,0004_retention}.sql · seed.sql · functions/* (empty — M6)
+supabase/    migrations/{0001_init,0002_rls,0003_storage,0004_retention}.sql · seed.sql
+  functions/  _shared/* (ai-provider, moderation, validation, errors, rate-limit, db, …) + 4 Deno fns (M6)
 assets/      icons · splash · placeholder art  (Expo placeholder icons until brand pass)
 docs/        product + technical documentation (source of truth)
 app.json · tsconfig.json · eslint.config.js · package.json · .env.example · CLAUDE.md

@@ -67,6 +67,19 @@ supabase functions deploy process-uploaded-image
 ```
 Verify each per `08-test-plan.md` §4. If `AI_MOCK_MODE=true` or a key is missing, functions return mock results (`demo:true`) — safe for staging demos. Mock mode is never rate-limited; real mode enforces the per-device limit and the global daily cap above (per-device checked first, then global) and returns a calm child/parent-safe message when either is exceeded.
 
+### Edge Function runtime notes (M6)
+- **Runtime:** Deno (Supabase Edge). Functions use the built-in `Deno.serve`; the only external dependency is `npm:@supabase/supabase-js@2`, imported **only** in `_shared/db.ts` (service-role DB/storage writes). Shared safety/validation/provider logic in `_shared/*` is dependency-free and is **unit-tested under Node/Jest** (`npm test` covers moderation, provider determinism, rate-limit, error envelopes, config — see `08` §2).
+- **Local syntax/type check (needs Deno):** `deno check supabase/functions/**/*.ts`. The app's `tsc` intentionally **excludes** `supabase/functions` (Deno-typed, not part of the RN bundle); ESLint also ignores it.
+- **Local smoke (needs Supabase CLI + Docker):**
+  ```bash
+  supabase functions serve   # serves all four locally (mock mode if no keys)
+  # then POST to each, e.g.:
+  curl -s http://localhost:54321/functions/v1/moderate-prompt \
+    -H 'content-type: application/json' -d '{"prompt":"cute elephant astronaut"}'
+  ```
+  Expect `{ ok:true, data:{ status:"safe", ... } }`; a borderline prompt → `status:"rewritten"`; an unsafe one → `status:"blocked"` with the fixed child message. `generate-image` / `transform-image` / `process-uploaded-image` return `demo:true` with self-contained SVG data-URL images in mock mode.
+- **Model IDs** are config, not code (`_shared/ai-provider/config.ts` defaults, overridable via the env above). **Verify the exact current IDs before the real-key pilot** and record them in `10-handoff.md`.
+
 ### Data retention purge (V1)
 Anonymous uploaded/AI images + metadata are retained for `DATA_RETENTION_DAYS` (default **30**), then purged (policy: `04-database-schema.md` §9). Set up the scheduled purge once per project:
 - **Option A — `pg_cron`** (applied by `migrations/0004_retention.sql`): a daily job calls a purge function that deletes expired `uploaded_images`/`ai_generations` rows and their storage objects.
@@ -92,10 +105,11 @@ See `.env.example` for the authoritative list. Summary:
 | `AI_GLOBAL_DAILY_LIMIT` | Edge Functions | no | global request-count cap across all devices per window (default `500`) |
 | `AI_GLOBAL_DAILY_SPEND_CAP_USD` | Edge Functions | no | optional dollar ceiling; provider-budget integration (count cap enforced first) |
 | `AI_LIMIT_WINDOW_HOURS` | Edge Functions | no | rolling window for both limits (default `24`) |
-| `OPENAI_MODERATION_MODEL` | Edge Functions | no | model ID; **verified at implementation**, has a documented default |
-| `OPENAI_REWRITE_MODEL` | Edge Functions | no | model ID; verified at implementation, default documented |
-| `OPENAI_IMAGE_MODEL` | Edge Functions | no | model ID; verified at implementation, default documented |
-| `REPLICATE_IMAGE_MODEL` | Edge Functions | no | model/version ID for the Replicate provider |
+| `OPENAI_MODERATION_MODEL` | Edge Functions | no | model ID; **verified at implementation**, has a documented default (`omni-moderation-latest`) |
+| `OPENAI_REWRITE_MODEL` | Edge Functions | no | model ID; verified at implementation, default documented (`gpt-4o-mini`) |
+| `OPENAI_IMAGE_MODEL` | Edge Functions | no | model ID; verified at implementation, default documented (`gpt-image-1`) |
+| `REPLICATE_IMAGE_MODEL` | Edge Functions | no | model/version ID for the Replicate provider (default `black-forest-labs/flux-schnell`) |
+| `AI_PROVIDER_TIMEOUT_MS` | Edge Functions | no | upstream provider-call timeout in ms (default `25000`); on timeout → child-safe "nap" retry (docs/05 §12) |
 | `DATA_RETENTION_DAYS` | Edge Functions / DB | no | anonymous image+metadata retention window (default `30`; `0`/unset disables purge in dev) |
 
 **Rule:** anything secret is set via `supabase secrets set` (or CI secret store), **never** prefixed `EXPO_PUBLIC_`, never committed. `.env` is git-ignored; only `.env.example` is committed. Model IDs are **configuration, not code** — set/verify them via these env vars rather than hardcoding literals.

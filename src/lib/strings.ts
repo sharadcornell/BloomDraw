@@ -67,6 +67,10 @@ export const strings = {
     aiResting: 'Our art helper is resting for now. Please try again later.',
     rateLimit: "Let's take a tiny break and try again in a moment.",
     offline: "You're offline right now. You can still draw from the library!",
+    // Maps to the `invalid_input` Edge Function error (docs/05 §9).
+    invalidInput: "Hmm, that didn't work. Try a different idea!",
+    // Maps to the `storage_error` Edge Function error (docs/05 §9).
+    storage: "We couldn't save that image. Let's try again!",
     retry: 'Try again',
   },
   safety: {

@@ -279,3 +279,18 @@ Applies to **`generate-image`, `transform-image`, and `process-uploaded-image`**
 - **Synchronous shape (V1 default):** the contracts in §2–§5 are synchronous (request → final `data`). This is fine for mock and an initial real-key smoke. **Documented risk:** a slow provider may hit the timeout; the app degrades to the retry state rather than hanging.
 - **Async/polling (preferred real-key path):** when the provider supports async jobs, the recommended real implementation is **submit → `{ generationId, status:'processing' }` → poll a `get-generation-status` endpoint (or webhook) until `complete`/`failed`.** This avoids long-held requests. The response envelope already carries `generationId` and a `status` field to support this without a breaking change. Adopting it is a real-key-pilot task, not a V1 mock requirement.
 - **Mock:** returns immediately (optionally a small artificial delay to exercise the loading UI); never times out. **No job queue in V1.**
+- **Timeout knob:** the Edge-side ceiling is `AI_PROVIDER_TIMEOUT_MS` (default `25000`, below the platform wall-clock). Implemented via `_shared/timeout.ts`.
+
+---
+
+## 13. Implementation notes (Milestone 6)
+
+The four functions match §2–§5. A few intentional, documented specifics:
+
+- **`generate-image` `original_prompt`:** this endpoint receives only a `safePrompt` (the user's original text lives in `moderate-prompt`), so the `ai_generations.original_prompt` row is set to the incoming `safePrompt`. M7 may thread the true original through later; not a contract change.
+- **`generate-image` defensive moderation:** the `safePrompt` is **re-moderated server-side**; a block returns the `blocked_prompt` error envelope (the row is not advanced to `complete`). A defensive rewrite is used as the effective prompt.
+- **`transform-image` persistence:** the single-style transform returns no `uploadedImageId` (per §4) and therefore **does not write a row**; rate-limit accounting is driven by `generate-image` + `process-uploaded-image` rows. (Minor, documented under-count for standalone transforms.)
+- **Real generated-image URLs (real-key path):** V1 returns the provider's image URL/`b64` directly (mock returns a self-contained SVG **data URL**). **Persisting real outputs to the private `ai-generations` bucket + returning a short-TTL signed URL is a pre-pilot task** (the provider URL may be temporary) — see `10-handoff.md`.
+- **`process-uploaded-image` status mapping:** the API `status` is `complete`/`partial`/`failed`; the `uploaded_images.processed_status` enum has no `partial`, so a partial result stores `processed_status='complete'` (some variants present) and the API surfaces `partial`.
+- **Rate-limit accounting:** per-device + global counts are derived by counting `ai_generations` + `uploaded_images` rows in the window (no extra table). In **real mode without Supabase configured**, counts can't be read → the function logs a warning and allows (cannot enforce). Mock mode is never counted.
+- **Spend cap:** `AI_GLOBAL_DAILY_SPEND_CAP_USD` is carried in config and documented as a **provider-budget integration before the real-key pilot**; V1 enforces the request-count cap only (§11b).

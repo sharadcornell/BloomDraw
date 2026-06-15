@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–5 complete — Milestones 6–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation.
+> Status: **Milestones 1–6 complete — Milestones 7–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1–M4** + **M5 (Supabase Foundation)** complete. The app boots → splash → onboarding → tabs, browses content, and persists local state. The **Supabase foundation** is now in place: guarded offline-safe client, migrations (schema + RLS + storage + retention), generated `seed.sql`, anonymous session + storage services. **The app still runs fully in local/mock mode with no Supabase env** (no crash). No Edge Functions / AI / upload / projector yet.
-- **Awaiting:** explicit approval to proceed to **Milestone 6 (AI Edge Functions)**.
+- **Phase:** Documentation + **M1–M5** + **M6 (AI Edge Functions)** complete. The app boots → splash → onboarding → tabs, browses content, and persists local state. The **AI backend foundation** is now in place: four Deno Edge Functions (`moderate-prompt`, `generate-image`, `transform-image`, `process-uploaded-image`), a provider-agnostic `AIProvider` (OpenAI / Replicate / **Mock**), deterministic mock fallback, prompt moderation (safe / rewritten / blocked), per-device + global rate limiting (real mode), child-safe error handling, and service-role DB writes — all server-side; **no secret ever reaches the app bundle.** **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No mobile AI/upload/projector UI yet (M7–M9).
+- **Awaiting:** explicit approval to proceed to **Milestone 7 (AI prompt flow — mobile UI)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -195,6 +195,47 @@
 - Storage upload/signed-URL helpers are foundations; the upload flow (M8) and AI writes (M6) are not implemented.
 - Not run on a device/simulator here; validated via Metro boot + iOS export.
 
+## Milestone 6 — AI Edge Functions (✅ complete, 2026-06-15)
+
+**What was built** — the server-side AI foundation (Deno Edge Functions). The mobile AI/upload/projector UI is intentionally **not** built here (M7–M9).
+
+- **Four Edge Functions** (`supabase/functions/*/index.ts`), each per `05-api-contract.md`:
+  - **`moderate-prompt`** — classify → `safe` / `rewritten` / `blocked` (+ `safePrompt`, `userMessage`, server-only `reasonCode`). Always called before generation; not separately rate-limited (cheap).
+  - **`generate-image`** — defensively **re-moderates** the `safePrompt`, writes/updates an `ai_generations` row (when configured), returns `imageUrl` (+ `lineArtUrl` when requested), `provider`, `status`, `demo`.
+  - **`transform-image`** — `imageUrl`|`uploadRef` + one `style` → `outputImageUrl`.
+  - **`process-uploaded-image`** — `imageUrl`|`uploadRef` + `styles[]` (default all four) → `line_art`/`sketch`/`cartoon`/`coloring_page` URLs; `complete`/`partial`/`failed`; writes an `uploaded_images` row.
+- **Shared modules** (`supabase/functions/_shared/`): `types.ts`, `env.ts`, `strings.ts` (re-exports the app's single source of child copy), `util.ts`, `errors.ts`, `response.ts`, `cors.ts`, `validation.ts`, `moderation.ts`, `timeout.ts`, `rate-limit.ts`, `handler.ts`, `db.ts` (Deno-only service-role), `enforce.ts` (Deno-only), and `ai-provider/{config,mock,openai,replicate,index}.ts`.
+- **Provider abstraction** (`AIProvider`): `moderatePrompt`, `rewritePromptForKidSafety`, `generateImage`, `transformImage`, `generateLineArt/Sketch/Cartoon/ColoringPage`, plus `name` + `isMock`. `getProvider()` returns **Mock** when `AI_MOCK_MODE=true` (default), `AI_PROVIDER=mock`, **or the selected provider's key is missing** (fail-safe + server warning); else OpenAI (default) / Replicate. **Model IDs come from env/config** (`_shared/ai-provider/config.ts`), never hardcoded literals.
+- **Mock fallback** (default): deterministic, offline, no keys. Moderation uses the local keyword/category ladder; images are self-contained **SVG data URLs** keyed off a prompt/source hash (stable across calls); every mock response sets `demo:true`. **Mock is never rate-limited.**
+- **Moderation:** blocks violence (graphic/targeted), sexual/adult, hate, self-harm, dangerous content, and disturbing/scary content; **softens** borderline fantasy aggression to a gentle prompt (e.g. "dragon fighting monster with blood" → rewritten). Re-checks a rewrite **once** (never loops). Raw categories are server-side `reasonCode` only; the child sees the fixed block/rewrite copy from `src/lib/strings.ts`.
+- **Rate limiting & global cap** (real mode only, per `AI_RATE_LIMIT_*` / `AI_GLOBAL_DAILY_*` env): per-device checked **first**, then global; over-device → `rate_limited` ("Let's take a tiny break…"), global → `global_limit_reached` ("Our art helper is resting for now…"). Counts derive from `ai_generations` + `uploaded_images` rows in the window (no extra table). Spend cap (`AI_GLOBAL_DAILY_SPEND_CAP_USD`) is carried + documented as a **provider-budget integration before the pilot**; count cap enforced first.
+- **Timeouts:** each provider call is wrapped with `withTimeout` (`AI_PROVIDER_TIMEOUT_MS`, default 25s) → child-safe "nap" retry on timeout; rows marked `failed` when configured. No job queue (async/polling documented as the real-key upgrade — `05` §12).
+- **Security:** secrets read server-side only (`env.ts`); service-role used only in `db.ts`; CORS is hygiene-only; primary controls = validation + server-side secrets + device/session checks + rate limiting + safe errors. Child prompt text is **not** logged (only status/reasonCode/length).
+- **Supabase writes:** service-role client writes/updates `ai_generations`, `uploaded_images`, and upserts `anonymous_sessions` — all **best-effort**; when service role is absent the functions still return valid mock responses and never crash.
+
+**Engineering note (Deno × Node):** Edge Functions run on Deno (`Deno.serve` + `npm:@supabase/supabase-js@2`, the latter isolated in `db.ts`). The pure safety/validation/provider logic is dependency-free and **unit-tested under Node/Jest** using explicit `.ts` import extensions (Deno-required) resolved via a jest `moduleNameMapper`. The app's `tsc` and ESLint **exclude** `supabase/functions` (Deno-typed, not part of the RN bundle).
+
+**Deviations from the contract (documented in `05` §13):** `generate-image` stores `original_prompt = safePrompt` (it only receives the safe prompt); `transform-image` writes no row (no `uploadedImageId` in its contract); real provider image URLs are returned directly in V1 (persisting to the `ai-generations` bucket + signed URL is a pre-pilot task); `process-uploaded-image` partial → row `processed_status='complete'` while the API returns `partial`.
+
+**Tests (`supabase/functions/_shared/__tests__/`)** — +54 (7 suites): moderation (safe/rewrite/block per category, no-loop, block-over-soften priority), provider (mock determinism, demo flag, missing-key → mock fallback, provider selection), config/env (defaults, model-ID overrides, limit knobs, useMock logic), validation (prompt/age/style/styles/source/device-id/JSON), errors (code → child-safe message + retryable + status, envelope shapes, no-leak), rate-limit (pure evaluator ordering + wired counters), timeout (fast/slow/propagate). **Total suite 86/86.**
+
+**Commands run & results (M6)**
+| Command | Result |
+| --- | --- |
+| `npm test` | ✅ **86/86** (11 suites; +54 Edge-Function tests) |
+| `npm run lint` | ✅ exit 0, no findings |
+| `npm run typecheck` | ✅ exit 0 (strict; `supabase/functions` excluded — Deno-typed) |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npx expo export -p ios` | ✅ bundled (4.9MB Hermes bundle; server code correctly excluded) |
+
+**Local function smoke (Deno/Supabase CLI):** **not run here** — Deno and the Supabase CLI are not installed in this environment. Exact commands to run later are in `09-deployment-runbook.md` §4 ("Edge Function runtime notes"): `deno check supabase/functions/**/*.ts`, then `supabase functions serve` + curl each function in mock mode.
+
+**Warnings / unresolved (non-blocking, M6)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- Edge Functions not served/deployed here (no Deno/Supabase CLI/Docker); validated by 54 Node unit tests + review. Run `supabase functions serve` + a real-key smoke before the pilot.
+- OpenAI/Replicate real paths (image generation/edits, prediction polling) are **API-ready but unverified without keys**; the exact request shapes + **model IDs** must be confirmed at the real-key pilot.
+- Real generated/transformed outputs are returned as the provider URL/`b64` in V1; persisting them to the private `ai-generations` bucket + short-TTL signed URLs is a pre-pilot task.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -202,7 +243,7 @@ Documentation set under `/docs` plus root config drafts:
 - `README.md` (draft)
 - `.env.example` (draft)
 
-Supabase migrations/functions and seed content are **scaffolded as empty folders** (created in M1) and will be implemented in Milestones 5–6. Feature code (shell, content, AI, etc.) is **planned** (see `07-implementation-plan.md`) but not yet written.
+App shell, content library, local state, the Supabase foundation (M5), and the AI Edge Functions (M6) are **implemented**. Remaining feature code — mobile AI prompt flow (M7), upload/camera (M8), projector preview (M9), polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
 
 ## Files changed
 
@@ -296,14 +337,33 @@ package.json / package-lock.json                      (react-native-url-polyfill
 README.md / docs/10-handoff.md                        (updated for M5)
 ```
 
-## How to run (current — Milestone 5)
+**Milestone 6 — AI Edge Functions (new/added):**
+```
+supabase/functions/_shared/{types,env,strings,util,errors,response,cors,validation,
+   moderation,timeout,rate-limit,handler,db,enforce}.ts                       (new)
+supabase/functions/_shared/ai-provider/{config,mock,openai,replicate,index}.ts (new)
+supabase/functions/{moderate-prompt,generate-image,transform-image,
+   process-uploaded-image}/index.ts                                           (new)
+supabase/functions/**/.gitkeep                                                (removed)
+supabase/functions/_shared/__tests__/{moderation,provider,config-env,validation,
+   errors,rate-limit,timeout}.test.ts                                         (new — 54 tests)
+src/lib/strings.ts            (updated — errors.invalidInput + errors.storage for the edge error map)
+tsconfig.json                 (updated — exclude supabase/functions from app tsc; Deno-typed)
+jest.config.js                (updated — strip `.ts` import extensions for Node resolution)
+.env.example                  (updated — AI_PROVIDER_TIMEOUT_MS)
+docs/05-api-contract.md       (updated — §13 implementation notes)
+docs/09-deployment-runbook.md (updated — Edge runtime notes + AI_PROVIDER_TIMEOUT_MS)
+README.md / docs/10-handoff.md (updated for M6)
+```
+
+## How to run (current — Milestone 6)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
-npm test                                               # content + seed + state + services (32 tests)
+npm test                                               # content + seed + state + services + edge fns (86 tests)
 npm run seed:gen                                       # regenerate supabase/seed.sql from src/content
 ```
-To enable the backend: set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`, apply migrations + `seed.sql` to a Supabase project (docs/09 §3). (Node ≥ 22.13 recommended.)
+To enable the backend: set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`, apply migrations + `seed.sql` to a Supabase project (docs/09 §3). To serve/deploy the **Edge Functions** (needs Deno + Supabase CLI): `supabase functions serve` (smoke in mock mode) → `supabase functions deploy <name>` (docs/09 §4). (Node ≥ 22.13 recommended.)
 
 ## How to configure Supabase
 See `09-deployment-runbook.md` §3–§4 and `04-database-schema.md`. Summary: create project → `supabase link` → `db push` migrations → run `seed.sql` → create buckets → set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`.
@@ -327,6 +387,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 3 checks (all pass):** `npm test` (**9/9** content integrity), `npm run lint` (0 findings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,680 modules).
 - **Milestone 4 checks (all pass):** `npm test` (**22/22** — content + state), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,686 modules).
 - **Milestone 5 checks (all pass):** `npm test` (**32/32** — content + seed + state + services), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npm run start` (Metro boots), `npx expo export -p ios` (1,756 modules), `npm run seed:gen` (seed generated). Supabase CLI not run locally (no project) — commands documented for later.
+- **Milestone 6 checks (all pass):** `npm test` (**86/86** — +54 Edge-Function tests across 7 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors; `supabase/functions` excluded — Deno-typed), `npx expo-doctor` (18/18), `npx expo export -p ios` (4.9MB bundle; server code excluded). Deno + Supabase CLI not installed → `deno check` / `supabase functions serve` smoke documented for later (docs/09 §4).
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -347,8 +408,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 6 (AI Edge Functions — moderate-prompt, generate-image, transform-image, process-uploaded-image + provider abstraction + mock fallback + rate limiting).** (Milestones 1–5 are complete.)
-2. Execute Milestones 6→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 7 (AI prompt flow — mobile UI: prompt screen → moderate → generate image + line art → result → recents).** (Milestones 1–6 are complete; the AI Edge Functions + mock fallback are ready for the UI to call.)
+2. Execute Milestones 7→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 
