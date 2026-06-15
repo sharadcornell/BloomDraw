@@ -1,11 +1,11 @@
 # BloomDraw 🌸✏️
 
-> **Milestones 1–2 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, first-run age onboarding, themed bottom tabs, and polished placeholder screens. Real content/AI/Supabase/upload/projector logic begins at Milestone 3, pending approval.
+> **Milestones 1–3 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, first-run age onboarding, themed bottom tabs, and a working **content library**: 8 categories, ~100 seeded drawings (20 detailed heroes), Explore with filters, Drawing Detail, and step-by-step tutorials (4/6/8 steps). AI/Supabase/upload/projector logic begins at Milestone 4+, pending approval.
 
 **BloomDraw** is an AI-powered drawing companion for kids (ages 3–12) that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences. Built for parents and gift-buyers as a premium, kid-safe creative-learning app — and as the software companion to a future BloomDraw drawing **projector**.
 
 ## Status
-🟢 **Milestones 1–2 complete** — project setup + app shell (animated splash, age onboarding, 5 themed tabs, design system, 13 shared components, placeholder screens). All checks pass (lint, typecheck, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 3–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
+🟢 **Milestones 1–3 complete** — project setup + app shell + content library (8 categories, 100 seeded items / 20 heroes, Explore + filters, Drawing Detail, step-by-step tutorials). All checks pass (lint, typecheck, **9/9 content tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 4–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
 
 ## What it does (V1 / MVP)
 - 📚 Browse a library of ~100 guided drawings across 8 categories (Alphabets, Numbers, Animals, Vehicles, Space, Nature, Curriculum, Cards).
@@ -63,7 +63,7 @@ Today this boots to a placeholder Home screen (Milestone 1). As features land, w
 | `npm run lint` | ESLint (`eslint .`) | ✅ M1 |
 | `npm run typecheck` | `tsc --noEmit` (strict) | ✅ M1 |
 | `npx expo-doctor` | Expo health check | ✅ M1 |
-| `npm run test` | Jest unit tests | ⏳ added in Milestone 11 |
+| `npm run test` | Jest unit tests (jest-expo) — content integrity suite | ✅ M3 |
 
 ## Configuration
 - App-public config via `EXPO_PUBLIC_*` (Supabase URL + anon key + app env).
@@ -80,8 +80,9 @@ src/
   components/            13 shared UI components (+ index barrel)
   state/                 useAppStore (age + onboarding, persisted)
   lib/                   strings · placeholders
-  types/                 shared types
-  services · content/    (empty — filled in M3/M5)
+  types/                 shared types (Category, DrawingItem, DrawingStep, …)
+  content/               categories + 8 item files + queries + validate (8 cats, 100 items)
+  services/              (empty — filled in M5)
 supabase/    migrations · functions/{_shared,moderate-prompt,generate-image,transform-image,process-uploaded-image}  (empty scaffolding)
 assets/      icons · splash · placeholder art  (Expo placeholder icons until brand pass)
 docs/        product + technical documentation (source of truth)

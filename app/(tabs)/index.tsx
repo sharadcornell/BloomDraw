@@ -10,27 +10,27 @@ import {
   Card,
   Chip,
   DemoModeBadge,
+  DrawingCard,
   EmptyState,
   Screen,
   SectionHeader,
-  SkeletonCard,
 } from '@/components';
-import { CATEGORY_PLACEHOLDERS, CREATE_OPTIONS } from '@/lib/placeholders';
+import { CATEGORIES, getFeaturedItems, getRecommendedItems } from '@/content';
+import { CREATE_OPTIONS } from '@/lib/placeholders';
 import { strings } from '@/lib/strings';
 import { useAppStore } from '@/state/useAppStore';
-import { theme } from '@/theme/theme';
+import { getCategoryAccent, theme } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
 
-/**
- * Home (Milestone 2 scaffold). Real content/lessons/recents/favorites/projector
- * arrive in later milestones — everything here is a polished PLACEHOLDER.
- */
+/** Home — hero, age filter, real featured/recommended content, and create entry points. */
 export default function HomeScreen() {
   const router = useRouter();
   const { isTablet } = useTheme();
   const selectedAgeRange = useAppStore((s) => s.selectedAgeRange);
   const setAgeRange = useAppStore((s) => s.setAgeRange);
 
+  const featured = getFeaturedItems().slice(0, 10);
+  const recommended = getRecommendedItems(selectedAgeRange, 8);
   const categoryWidth = isTablet ? '23%' : '47%';
 
   return (
@@ -68,7 +68,7 @@ export default function HomeScreen() {
               variant="secondary"
               fullWidth={false}
               icon="sparkles"
-              onPress={() => router.push('/create')}
+              onPress={() => router.push('/explore')}
             />
           </View>
         </LinearGradient>
@@ -82,40 +82,49 @@ export default function HomeScreen() {
         <AgeFilter value={selectedAgeRange} onChange={setAgeRange} />
       </Animated.View>
 
-      {/* Featured lessons (placeholder) */}
+      {/* Featured lessons */}
       <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.section}>
         <SectionHeader
           title={strings.home.featured}
           actionLabel={strings.home.seeAll}
           onAction={() => router.push('/explore')}
         />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredRow}>
-          {[0, 1, 2, 3].map((i) => (
-            <View key={i} style={styles.featuredCard}>
-              <SkeletonCard height={120} />
-              <AppText variant="caption" color={theme.color.ink.muted} style={styles.featuredCaption}>
-                Coming soon
-              </AppText>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+          {featured.map((item) => (
+            <View key={item.slug} style={styles.hCard}>
+              <DrawingCard item={item} onPress={() => router.push(`/drawing/${item.slug}`)} />
             </View>
           ))}
         </ScrollView>
       </Animated.View>
 
-      {/* Categories (placeholder) */}
+      {/* Age-based recommendations */}
       <Animated.View entering={FadeInDown.delay(240).duration(400)} style={styles.section}>
+        <SectionHeader title={selectedAgeRange ? `Just right for ages ${selectedAgeRange}` : 'Just for you'} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+          {recommended.map((item) => (
+            <View key={item.slug} style={styles.hCard}>
+              <DrawingCard item={item} onPress={() => router.push(`/drawing/${item.slug}`)} />
+            </View>
+          ))}
+        </ScrollView>
+      </Animated.View>
+
+      {/* Categories */}
+      <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
         <SectionHeader
           title={strings.home.categories}
           actionLabel={strings.home.seeAll}
           onAction={() => router.push('/explore')}
         />
         <View style={styles.grid}>
-          {CATEGORY_PLACEHOLDERS.map((cat) => (
+          {CATEGORIES.map((cat) => (
             <Pressable
               key={cat.slug}
-              onPress={() => router.push('/explore')}
+              onPress={() => router.push(`/explore?category=${cat.slug}`)}
               style={({ pressed }) => [{ width: categoryWidth }, pressed && styles.pressed]}
             >
-              <Card accent={theme.getCategoryAccent(cat.slug)}>
+              <Card accent={getCategoryAccent(cat.slug)}>
                 <AppText variant="h2">{cat.emoji}</AppText>
                 <AppText variant="h3" color={theme.color.ink.strong}>
                   {cat.name}
@@ -127,7 +136,7 @@ export default function HomeScreen() {
       </Animated.View>
 
       {/* Quick create */}
-      <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.section}>
+      <Animated.View entering={FadeInDown.delay(360).duration(400)} style={styles.section}>
         <SectionHeader title={strings.home.quickCreate} />
         <View style={styles.createRow}>
           {CREATE_OPTIONS.map((opt) => (
@@ -147,16 +156,15 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
 
-      {/* Recent creations (placeholder) */}
-      <Animated.View entering={FadeInDown.delay(360).duration(400)} style={styles.section}>
+      {/* Recents + favorites placeholders (Milestone 4) */}
+      <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.section}>
         <SectionHeader title={strings.home.recents} />
         <Card>
           <EmptyState emoji="🌱" message={strings.empty.recents} />
         </Card>
       </Animated.View>
 
-      {/* Favorites (placeholder) */}
-      <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.section}>
+      <Animated.View entering={FadeInDown.delay(480).duration(400)} style={styles.section}>
         <SectionHeader title={strings.home.favorites} />
         <Card>
           <EmptyState emoji="❤️" message={strings.empty.favorites} />
@@ -164,7 +172,7 @@ export default function HomeScreen() {
       </Animated.View>
 
       {/* Projector preview entry (placeholder) */}
-      <Animated.View entering={FadeInDown.delay(480).duration(400)} style={styles.section}>
+      <Animated.View entering={FadeInDown.delay(540).duration(400)} style={styles.section}>
         <Card accent={theme.color.brand.sky}>
           <View style={styles.projectorRow}>
             <AppText variant="h2">📽️</AppText>
@@ -191,9 +199,8 @@ const styles = StyleSheet.create({
   hero: { borderRadius: theme.radius.xl, padding: theme.space.xl, ...theme.shadow.e2 },
   heroSubtitle: { marginTop: theme.space.sm, opacity: 0.95 },
   heroCta: { marginTop: theme.space.lg, flexDirection: 'row' },
-  featuredRow: { gap: theme.space.md, paddingRight: theme.space.lg },
-  featuredCard: { width: 150, gap: theme.space.xs },
-  featuredCaption: { paddingLeft: theme.space.xs },
+  row: { gap: theme.space.md, paddingRight: theme.space.lg },
+  hCard: { width: 160 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.space.md },
   createRow: { flexDirection: 'row', gap: theme.space.md },
   projectorRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.base },

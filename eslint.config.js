@@ -9,4 +9,21 @@ module.exports = defineConfig([
     // linted by the app ESLint config (Supabase functions get their own setup later).
     ignores: ["dist/*", ".expo/*", "ios/*", "android/*", "supabase/functions/**"],
   },
+  {
+    // Jest globals for test files.
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+    languageOptions: {
+      globals: {
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        jest: "readonly",
+      },
+    },
+  },
 ]);
