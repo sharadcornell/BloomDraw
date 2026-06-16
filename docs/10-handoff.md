@@ -1,12 +1,32 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–10 complete — Milestones 11–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow + M9 projector preview + M10 polish.
+> Status: **Milestones 1–12 complete — demo-ready MVP (not a production / public kids release).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow + M9 projector preview + M10 polish + M11 testing/fixes + M12 final handoff.
 
-## Current state (2026-06-15)
-- **Phase:** Documentation + **M1–M9** + **M10 (Polish)** complete. All MVP flows are built and now refined for a premium, cohesive, demo-ready feel: unified demo badges across creation/result/projector screens, a clearer Settings demo-mode explanation, OS large-text tolerance (per-variant font-scaling caps), memoized content lists (Home / Explore / Favorites), gentle micro-interactions (projector canvas entrance, success haptics on generation + variant save), and centralized child-safe copy. **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No new product scope was added.
-- **Awaiting:** explicit approval to proceed to **Milestone 11 (Testing & fixing)**.
-- **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
+## Final status (2026-06-15) — authoritative handoff summary
+- **What this is:** a **demo-ready MVP** of BloomDraw, runnable end-to-end with **zero backend and zero keys** (local/mock mode, "Demo mode" badge). It is **not** a production or public kids release — see the gated checklists at the end.
+- **Milestones 1–12 complete:** 1 setup · 2 app shell · 3 content library · 4 local state · 5 Supabase foundation · 6 AI Edge Functions · 7 AI prompt flow · 8 upload/camera flow · 9 projector preview · 10 polish · 11 testing & fixes · 12 final handoff (this pass).
+- **Commit history (local only, newest first):**
+  | hash | milestone |
+  | --- | --- |
+  | _(this commit)_ | M12 — final handoff |
+  | `fbfb44a` | M11 — testing and fixes |
+  | `f4b42b7` | M10 — MVP polish |
+  | `2dde593` | M9 — projector preview |
+  | `b11fc58` | M8 — upload and variant flow |
+  | `7518e25` | M7 — AI prompt flow |
+  | `6596397` | M6 — Edge Functions and mock provider |
+  | `2da25ad` | M5 — Supabase foundation |
+  | `195b045` | M4 — local favorites and recents |
+  | `e91f2cc` | M3 — content library |
+  | `9db22ca` | M2 — app shell |
+  | `a00cea3` | M1 — Expo SDK 56 project setup |
+- **What works in local/mock mode (no Supabase/AI env, no crash):** animated splash + boot gate · age **onboarding** → Home · **Home** (hero, age filter, featured/recommended/category/recents/favorites/projector entry) · **Explore** content library (8 cats / 100 items, category+age+difficulty filters) · **Drawing Detail** + **Tutorial** (4/6/8 steps) · **Favorites** + **Recents** (persisted, reopenable) · **AI prompt** mock flow (safe / gentle-rewrite / block) → **AI Result** · **Upload/Camera** mock flow → **Variant Selection** (Original + 4 styles) · **Projector Preview** (rotate/zoom/brightness/high-contrast/paper/reset) from every entry point · **Settings** (age band, demo explanation, clear favorites/recents, reset onboarding in dev).
+- **Latest checks (all green):** `npm test` **134/134** (16 suites) · `npm run lint` 0 · `npm run typecheck` 0 · `npx expo-doctor` 18/18 · `npx expo export -p ios` 5.0MB Hermes bundle · `npm run seed:gen` + `git diff --exit-code supabase/seed.sql` **no drift**.
+- **Security / no-secret:** no provider/service-role secrets in `app/`/`src/`; only `EXPO_PUBLIC_*` consumed by the client; `.env` git-ignored (only `.env.example` committed); AC-11 bundle scan clean (no keys, no JWT strings; `sk-` hits are Hermes word artifacts).
+- **Supabase / Edge status:** schema + RLS + storage migrations, generated `seed.sql`, four Deno Edge Functions, and the provider-agnostic `AIProvider` (OpenAI/Replicate/**Mock**) are all written and unit-tested under Node/Jest. **Not yet applied to a live Supabase project here** (no CLI/Docker on this machine) — `deno check`, `supabase db reset`, `supabase functions serve` remain documented for a tooled machine.
+- **Still pending (out of this milestone's reach here):** on-device/simulator pass (iOS + Android + tablet), camera/gallery permission flow on hardware, live-Supabase migration/seed/Edge smoke, and the real-key OpenAI/Replicate paths. See the checklists at the end.
+- **Repo:** git initialized at M1; **local commits only, no remote configured, nothing pushed.** GitHub push commands are documented (README → "Push to GitHub") but **not run**.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
 
@@ -598,11 +618,24 @@ docs/05-api-contract.md                          (moderate-prompt reasonCode doc
   all-styles-fail branch throws `provider_unavailable` so its `'failed'` body is unused
   (child still sees the nap message).
 
-## How to run (current — Milestone 11)
+## Milestone 12 — Final Handoff (✅ complete, 2026-06-15)
+
+**Goal:** package the MVP for final local handoff — clean README, authoritative handoff notes, demo + pre-pilot + pre-release checklists, setup/run/test instructions, Supabase/Edge instructions, and GitHub push preparation. **No new product scope; no remote push.**
+
+**What was done**
+- **README:** updated status to "Milestones 1–12 complete — demo-ready MVP"; fixed a stale Quick-start line that still claimed "placeholder Home screen (Milestone 1)"; added a **Requirements** block (Node ≥ 22.13/24.x, npm, Expo, optional Supabase CLI / Deno); added a **"Push to GitHub (when ready)"** section (remote-add + push + optional tag — documented, not run); clarified that moderation is text-prompt-only in V1.
+- **docs/10-handoff.md (this doc):** rewrote the top into an **authoritative final-handoff summary** (status, milestone + commit list, what-works-in-mock, latest checks, security, Supabase/Edge status, what's pending); added this M12 section; added a **"Before demo" checklist** alongside the existing pre-pilot / pre-release checklists.
+- **docs/09-deployment-runbook.md:** aligned the Node prerequisite with the README recommendation (≥ 22.13 / 24.x).
+- **docs/08-test-plan.md:** added an explicit **status note** that the device/simulator pass, live Supabase/Deno/Edge checks, and real-key pilot checks remain pending (automated suite + bundle scan are done).
+- **Consistency audit:** verified no doc contradictions remain around mock-default behavior, demo-badge logic, prompt-vs-image moderation, projector-preview-vs-hardware, local-only favorites/recents, server-only secrets, "no public-kids-release readiness", unverified real-key paths, and Deno/Supabase CLI not run locally.
+
+**No code changed in M12** (documentation/packaging only). The two source fixes were made in M11 (`fbfb44a`).
+
+## How to run (current — Milestone 12)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
-npm test                                               # content + seed + state + services + edge fns + AI + upload + projector (128 tests)
+npm test                                               # content + seed + state + services + edge fns + AI + upload + projector + moderation no-leak (134 tests)
 npm run seed:gen                                       # regenerate supabase/seed.sql from src/content
 ```
 Try the creation flows with zero backend:
@@ -640,6 +673,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 9 checks (all pass):** `npm test` (**128/128** — +10 projector tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates the `/projector` route type), `npx expo export -p ios` (5.0MB bundle). Not exercised on-device here.
 - **Milestone 10 checks (all pass):** `npm test` (**128/128**, unchanged — polish added no new logic), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, no new routes), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB bundle); in-code navigation checklist confirmed all 14 screens reachable. Not exercised on-device here.
 - **Milestone 11 checks (all pass):** baseline was green; after the two fixes — `npm test` (**134/134** — +6 moderation no-leak tests across the same 16 suites), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB Hermes bundle). **Bundle secret-scan (AC-11):** no `EXPO_PUBLIC_*` secret values, no service-role/provider keys, no JWT (`eyJ…`) strings in `dist/` (export run with no env set; the only `sk-` regex hits are Hermes string-table word artifacts — `harddisk-`, `flask-`, `mask-`). **Deno/Supabase not installed here** → `deno check supabase/functions/**/*.ts`, `supabase start`, `supabase db reset`, `supabase functions serve`, `supabase migration list` remain documented for a machine with the CLIs. **Device/simulator pass still pending** (no simulator run here) — code/Metro/bundle level only.
+- **Milestone 12 checks (all pass):** documentation/packaging only — re-ran the full gate to confirm nothing regressed: `npm test` (**134/134**, 16 suites), `npm run lint` (0), `npm run typecheck` (0), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB Hermes bundle), and `npm run seed:gen` + `git diff --exit-code supabase/seed.sql` (**no drift** — committed seed matches the generator). Device/simulator + live Supabase/Deno/Edge smoke remain pending (no tooling here).
 
 ## Data retention (V1)
 Anonymous uploaded images and AI-generated images (plus their metadata/prompts) are retained for **30 days by default** (`DATA_RETENTION_DAYS`, configurable), then purged from Postgres and Storage by a scheduled job. Content tables are retained. Full policy: `04-database-schema.md` §9; setup: `09-deployment-runbook.md` §4 "Data retention purge". Confirm/adjust the window with the owner before a real-key pilot.
@@ -659,17 +693,31 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Milestone 11 (Testing & fixing) is complete** — automated checks pass (134/134), two real bugs fixed (moderation category leak; demo-badge correctness), AC-11 bundle secret-scan clean. **Still pending (require a machine with the tooling / hardware):** on-device/simulator pass of the scripted manual flows on iOS + Android + tablet, and the Deno/Supabase Edge smoke (`deno check`, `supabase functions serve`, `supabase db reset`). **Get approval before starting Milestone 12.**
-2. Execute Milestone 12 (`07-implementation-plan.md`), testing after, local commit per completed milestone (with summary), no remote push.
-3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
-4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
+**Milestones 1–12 are complete (demo-ready MVP).** The build pipeline is green and the docs are the authoritative handoff. Remaining work is gated and not part of the mock MVP:
+1. **Publish to GitHub** (owner-run; commands in README → "Push to GitHub"): add a remote and `git push -u origin main`; optionally `git tag mvp-local-demo`. **Not run here** (no remote configured).
+2. **Run the on-device/simulator pass** (the "Before demo" checklist below) — iOS + Android + tablet, camera/gallery permission flow, AI/upload/projector mock paths, Settings reset/clear. Pending: no simulator/device on this machine.
+3. **Stand up a live Supabase project** + run the Deno/Edge smoke (`deno check`, `supabase db reset`, `supabase functions serve`) — the "Before a real-key pilot" checklist below.
+4. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
+5. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass — the "Before App Store / public kids release" checklist below.
 
 ### Roadmap (future phases, not V1)
 auth + child profiles · cloud sync of favorites/recents · subscriptions · real Bluetooth/Wi-Fi projector pairing · parent dashboard · teacher/classroom + B2B school · marketplace · social sharing · video tutorials · AI-generated true step-by-step tutorials · print/export · store-release polish + compliance.
 
-## Pre-pilot & pre-release checklist
+## Final checklists (demo · pilot · release)
 
-> Gating steps **outside** the V1 mock build. The mock MVP does not require these; a real-key pilot and a public kids release do.
+> The mock MVP needs only the **Before demo** items. The pilot/release columns are gating steps **outside** the V1 mock build.
+
+### Before a demo (not yet run here — needs a simulator/device)
+- [ ] Update Node to **≥ 22.13 / 24.x** (clears the RN 0.85 `EBADENGINE` warning).
+- [ ] `npm install` && `cp .env.example .env` (leave keys blank) && `npm run start`.
+- [ ] Run on the **iOS simulator/device**; smoke onboarding → Home → Explore filters → Detail → Tutorial.
+- [ ] Run on **Android** if possible (emulator or device).
+- [ ] Check **camera/gallery permission** flow (camera needs a physical device; simulator falls back to gallery).
+- [ ] Check the **AI mock path** (safe → image + line art; "dragon fighting with blood" → rewrite banner; clearly-unsafe → block).
+- [ ] Check the **upload mock path** → Variant Selection → save → reopen from Recents.
+- [ ] Check **Projector Preview** controls (rotate / zoom / brightness / high-contrast / paper / reset) from a Drawing, the Tutorial's last step, an AI Result, and the Home card.
+- [ ] Check **Settings** reset onboarding (dev) + clear Favorites/Recents; confirm the **Demo-mode badge** shows (no keys).
+- [ ] Confirm a **tablet** layout looks right (2–3 column grids).
 
 ### Before a real-key pilot
 - [ ] Confirm AI **provider** and **exact model IDs** (set via env; record the IDs used).
@@ -680,6 +728,7 @@ auth + child profiles · cloud sync of favorites/recents · subscriptions · rea
 - [ ] Run **one real-key smoke test** (`moderate-prompt` safe/blocked + `generate-image`); record results.
 - [ ] **No secrets in the bundle** (string-scan; only `EXPO_PUBLIC_*` present).
 - [ ] Confirm **data-retention** purge job is configured (`DATA_RETENTION_DAYS`).
+- [ ] **Monitor the fail-open rate-limit path:** rate limiting allows requests if Supabase accounting is unavailable (deliberate, so the app never hard-breaks) — alert if the service client is null in production so real-mode cost controls can't silently no-op.
 
 ### Before App Store / public kids release
 - [ ] **Human legal/privacy review** for a children's product.
@@ -690,6 +739,8 @@ auth + child profiles · cloud sync of favorites/recents · subscriptions · rea
 - [ ] **App Store / Google Play kids-category review** (Kids / Designed for Families requirements).
 - [ ] **Data retention/deletion workflow verified** end-to-end (purge runs; objects + rows removed).
 - [ ] App icons/splash, permission usage strings, age-rating questionnaire complete.
+- [ ] **Device / tablet accessibility pass** (touch targets, large-font scaling, contrast, screen-reader labels) on real hardware.
+- [ ] **Production monitoring** in place (error reporting, Edge Function logs/alerts, rate-limit + spend dashboards).
 
 ## App-store build path
 See `09-deployment-runbook.md` §6–§7: EAS build/submit, permission usage strings, icons/splash, privacy policy, age rating; Kids/Designed-for-Families category is a gated, human-reviewed step (no compliance claimed here). The checklist above is the authoritative gate.

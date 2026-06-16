@@ -4,7 +4,7 @@
 > Covers local dev, Supabase setup, Edge Function deploy, env/secrets, and EAS builds. The app runs fully in **mock mode with no backend**; sections below add the real backend/AI path.
 
 ## 1. Prerequisites
-- Node LTS (≥ 20), npm (or pnpm), Git.
+- **Node ≥ 22.13** (or 20.19.4+ / 24.x), npm, Git. (Built on 22.12, which works but emits an RN 0.85 `EBADENGINE` warning — upgrade to clear it.)
 - Expo: `npx expo` (no global install needed) + the **Expo Go** app for quick device testing.
 - For native/EAS builds: an **Expo (EAS) account**; Xcode (iOS) / Android Studio (Android) for local native runs.
 - For backend: **Supabase account** + **Supabase CLI** (`npm i -g supabase` or `brew install supabase/tap/supabase`); Docker (for local `supabase start`, optional).

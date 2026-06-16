@@ -2,6 +2,8 @@
 
 > Status: Draft for approval · Owner: QA/Eng · Last updated: 2026-06-15
 > Maps to PRD acceptance criteria (`01-prd.md` §6) and launch criteria (§10). Default test posture runs in **mock mode** (no keys); a small real-key smoke pass is called out separately.
+>
+> **Execution status (as of M12 — demo-ready MVP):** §1 automated checks all pass (`npm test` **134/134** across 16 suites, `lint` 0, `typecheck` 0, `expo-doctor` 18/18, `expo export -p ios` 5.0MB, `seed:gen` no-drift) and the §1 **AC-11 bundle secret-scan** is clean. The §2 unit suite is comprehensive and **non-brittle** (pure logic + helpers; **no visual snapshots**). **Still pending — require hardware/tooling not on the build machine:** §3 scripted **manual flows** on a device/simulator, §4 **Edge Function** `supabase functions serve` / `deno check` smoke and **real-key** smoke, §5 **device checks** (iOS/Android/tablet, camera, cold-start), and the RLS sanity against a live Supabase project. See the "Before demo / pilot / release" checklists in `10-handoff.md`.
 
 ## 1. Automated checks (CI-able commands)
 Run from repo root after each milestone and before handoff:
