@@ -2,16 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { isRenderableImage } from '@/lib/image';
 import { theme } from '@/theme/theme';
 import type { RecentCreation, RecentType } from '@/types';
 
 import { AppText } from './AppText';
 import { Card } from './Card';
 import { DrawingThumbnail } from './DrawingThumbnail';
-
-function isHttp(url?: string | null): url is string {
-  return !!url && /^https?:\/\//i.test(url);
-}
 
 const TYPE_META: Record<RecentType, { label: string; emoji: string; accent: string }> = {
   ai_generation: { label: 'AI art', emoji: '✨', accent: theme.color.brand.violet },
@@ -39,7 +36,7 @@ export function RecentCard({ item, onPress, onRemove, style }: Props) {
     >
       <Card padded={false}>
         <View>
-          {isHttp(item.thumbnailUrl) ? (
+          {isRenderableImage(item.thumbnailUrl) ? (
             <Image
               source={{ uri: item.thumbnailUrl }}
               style={styles.thumb}

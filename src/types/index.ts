@@ -70,10 +70,21 @@ export type RecentCreation = {
   imageUrl?: string;
   /** Simplified line-art version. */
   lineArtUrl?: string | null;
-  /** Provider that produced it (`openai` | `replicate` | `mock`). */
+  /** Provider that produced it (`openai` | `replicate` | `mock` | `cloud`). */
   provider?: string;
   /** true when produced by the mock provider → app shows the Demo badge. */
   demo?: boolean;
+  // --- Uploaded-photo context (Milestone 8; all optional → backwards-safe) ---
+  /** Local uri of the original picked/captured photo (for re-opening variants). */
+  originalUri?: string;
+  /** The full set of produced variants (Original + four styles). */
+  variants?: {
+    original: string;
+    line_art: string | null;
+    sketch: string | null;
+    cartoon: string | null;
+    coloring_page: string | null;
+  };
 };
 
 export type DrawingItem = {

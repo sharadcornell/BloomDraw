@@ -1,6 +1,15 @@
 import { strings } from '@/lib/strings';
 
-import type { AgeRange, GenerationData, ModerationData } from './edge';
+import type {
+  AgeRange,
+  GenerationData,
+  ModerationData,
+  ProcessData,
+  TransformData,
+  TransformStyle,
+} from './edge';
+
+const ALL_STYLES: readonly TransformStyle[] = ['line_art', 'sketch', 'cartoon', 'coloring_page'];
 
 /**
  * CLIENT-side demo fallback for the AI flow (docs/03 §5, docs/05 §8, §10).
@@ -142,6 +151,58 @@ export function mockGenerate(safePrompt: string, options?: { lineArt?: boolean }
     generationId: null,
     imageUrl: illustration(safePrompt),
     lineArtUrl: options?.lineArt === false ? null : lineArt(safePrompt),
+    provider: 'mock',
+    status: 'complete',
+    demo: true,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Photo-transform demo variants (docs/05 §4–§5). Deterministic, keyed off the
+// source + style so the same photo always yields the same demo variants.
+// ---------------------------------------------------------------------------
+const STYLE_LABEL: Record<TransformStyle, string> = {
+  line_art: 'Line art',
+  sketch: 'Pencil sketch',
+  cartoon: 'Cartoon',
+  coloring_page: 'Coloring page',
+};
+
+function styleVariant(source: string, style: TransformStyle): string {
+  const seed = hash(`${source}|${style}`);
+  const tone = 40 + (seed % 60);
+  const stroke = `rgb(${tone},${tone},${tone})`;
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">` +
+    `<rect width="512" height="512" fill="#fff"/>` +
+    `<rect x="56" y="56" width="400" height="400" rx="24" fill="none" stroke="${stroke}" stroke-width="8"/>` +
+    `<circle cx="256" cy="230" r="110" fill="none" stroke="${stroke}" stroke-width="8"/>` +
+    `<text x="256" y="430" font-size="28" fill="${stroke}" text-anchor="middle">${STYLE_LABEL[style]}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/** Local demo mirror of process-uploaded-image → all requested style variants. */
+export function mockProcessUpload(source: string, styles?: TransformStyle[]): ProcessData {
+  const requested = styles && styles.length > 0 ? styles : ALL_STYLES;
+  const url = (style: TransformStyle): string | null =>
+    requested.includes(style) ? styleVariant(source, style) : null;
+  return {
+    uploadedImageId: null,
+    originalUrl: source,
+    lineArtUrl: url('line_art'),
+    sketchUrl: url('sketch'),
+    cartoonUrl: url('cartoon'),
+    coloringPageUrl: url('coloring_page'),
+    status: 'complete',
+    demo: true,
+  };
+}
+
+/** Local demo mirror of transform-image → one styled variant. */
+export function mockTransform(source: string, style: TransformStyle): TransformData {
+  return {
+    outputImageUrl: styleVariant(source, style),
+    style,
     provider: 'mock',
     status: 'complete',
     demo: true,

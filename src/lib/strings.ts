@@ -71,6 +71,38 @@ export const strings = {
       'happy robot drawing stars',
     ],
   },
+  upload: {
+    title: 'Add a photo',
+    subtitle: 'Turn a photo into drawing styles you can trace.',
+    pickGallery: 'Pick from gallery',
+    takePhoto: 'Take a photo',
+    usePhoto: 'Use this photo',
+    retake: 'Choose another',
+    previewLabel: 'Your photo',
+    // Loading copy (docs/02 §5).
+    processing: 'Turning your photo into drawing styles…',
+    tracing: 'Making a tracing version…',
+    longRunning: 'Still adding a little magic…',
+    // Permission / availability (child-safe; never a raw error).
+    cameraDenied: "We can't open the camera right now. You can still pick a photo from your gallery!",
+    cameraUnavailable: 'No camera here — pick a photo from your gallery instead.',
+    galleryDenied: "We can't open your photos right now. Try again, or take a photo instead!",
+    // Variant Selection.
+    variantsTitle: 'Pick a style',
+    variantsSubtitle: 'Choose the look you want to trace.',
+    save: 'Use this style',
+    saved: 'Saved to your recents',
+    tryAnother: 'Try another photo',
+    notFound: "We couldn't find that creation.",
+    recentTitle: 'My photo art',
+    styleLabels: {
+      original: 'Original',
+      line_art: 'Line art',
+      sketch: 'Pencil sketch',
+      coloring_page: 'Coloring page',
+      cartoon: 'Cartoon',
+    },
+  },
   recents: {
     title: 'Recents',
   },

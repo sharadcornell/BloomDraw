@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
+import { isRenderableImage } from '@/lib/image';
 import { theme } from '@/theme/theme';
 
 import { AppText } from './AppText';
@@ -44,12 +45,11 @@ function firstWords(input: string): string {
   return words || 'your idea';
 }
 
-function isHttp(url?: string | null): url is string {
-  return !!url && /^https?:\/\//i.test(url);
-}
-
 export function AiArtView({ url, demo, kind, seed, label, height = 260 }: Props) {
-  const showReal = isHttp(url) && !demo;
+  // `demo` is accepted for API clarity; rendering keys off whether the uri is a
+  // loadable raster image (SVG data URLs → branded placeholder instead).
+  void demo;
+  const showReal = isRenderableImage(url);
 
   if (showReal) {
     return (

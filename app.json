@@ -37,6 +37,13 @@
             "imageWidth": 76
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BloomDraw uses your photos so you can turn a picture into a drawing to trace.",
+          "cameraPermission": "BloomDraw uses your camera so you can take a photo to turn into a drawing."
+        }
       ]
     ],
     "experiments": {

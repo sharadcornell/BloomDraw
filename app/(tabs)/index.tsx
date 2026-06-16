@@ -186,6 +186,8 @@ export default function HomeScreen() {
                   onPress={() => {
                     if (item.type === 'ai_generation') {
                       router.push({ pathname: '/create/ai-result', params: { id: item.id } });
+                    } else if (item.type === 'uploaded_image') {
+                      router.push({ pathname: '/create/variants', params: { id: item.id } });
                     } else if (item.slug) {
                       router.push(`/drawing/${item.slug}`);
                     }

@@ -19,3 +19,4 @@ export { Screen } from './Screen';
 export { SectionHeader } from './SectionHeader';
 export { SkeletonCard } from './SkeletonCard';
 export { StepProgress } from './StepProgress';
+export { VariantCard } from './VariantCard';

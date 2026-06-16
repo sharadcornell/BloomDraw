@@ -21,10 +21,11 @@ export default function RecentsScreen() {
   const openRecent = (item: RecentCreation) => {
     if (item.type === 'ai_generation') {
       router.push({ pathname: '/create/ai-result', params: { id: item.id } });
+    } else if (item.type === 'uploaded_image') {
+      router.push({ pathname: '/create/variants', params: { id: item.id } });
     } else if (item.type === 'preloaded_drawing' && item.slug) {
       router.push(`/drawing/${item.slug}`);
     }
-    // uploaded_image reopen arrives with the upload flow (Milestone 8).
   };
 
   const confirmClear = () => {

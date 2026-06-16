@@ -228,7 +228,7 @@ processUploadedImage(input): Promise<ProcessData>
 ```
 Each returns `data` on `ok:true` or throws a typed `EdgeError { code, userMessage, retryable }` the UI maps to the error states in `01-prd.md` §9.
 
-> **Implementation status:** `moderatePrompt` + `generateImage` ship in **Milestone 7** (AI prompt flow); `transformImage` + `processUploadedImage` ship in **Milestone 8** (upload/camera flow). The app-side orchestration (`createAiArt`) and the offline/demo mirror live in `src/services/ai.ts` + `src/services/aiMock.ts`. The client never imports server/Deno code and never reads a secret (anon key only; `x-device-id` is sent for rate-limit accounting).
+> **Implementation status:** all four callers are implemented — `moderatePrompt` + `generateImage` in **Milestone 7** (AI prompt flow); `processUploadedImage` + `transformImage` in **Milestone 8** (upload/camera flow). App-side orchestration lives in `src/services/ai.ts` (prompt) and `src/services/upload.ts` (photo); the offline/demo mirror is `src/services/aiMock.ts`. The client never imports server/Deno code and never reads a secret (anon key only; `x-device-id` is sent for rate-limit accounting). When Supabase is configured, the upload flow uploads the original to `user-uploads/{device}/{uuid}.jpg` and passes `uploadRef`; unconfigured/offline → local demo variants.
 
 **Connectivity rules:**
 - **Supabase unconfigured** → the layer short-circuits to a local mock equivalent so the app still runs (mirrors server mock); all flows demoable.

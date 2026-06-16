@@ -1,6 +1,6 @@
 import { strings } from '@/lib/strings';
 
-import { mockGenerate, mockModerate } from './aiMock';
+import { mockGenerate, mockModerate, mockProcessUpload, mockTransform } from './aiMock';
 import { getDeviceId } from './session';
 import { supabase } from './supabase';
 
@@ -30,6 +30,40 @@ export interface GenerationData {
   generationId?: string | null;
   imageUrl: string;
   lineArtUrl: string | null;
+  provider: string;
+  status: string;
+  demo: boolean;
+}
+
+/** Photo-transform styles (docs/05 §4–§5). */
+export type TransformStyle = 'line_art' | 'sketch' | 'cartoon' | 'coloring_page';
+export const TRANSFORM_STYLES: readonly TransformStyle[] = [
+  'line_art',
+  'sketch',
+  'cartoon',
+  'coloring_page',
+];
+
+export function isTransformStyle(value: unknown): value is TransformStyle {
+  return typeof value === 'string' && (TRANSFORM_STYLES as readonly string[]).includes(value);
+}
+
+/** process-uploaded-image response (docs/05 §5). */
+export interface ProcessData {
+  uploadedImageId?: string | null;
+  originalUrl: string;
+  lineArtUrl: string | null;
+  sketchUrl: string | null;
+  cartoonUrl: string | null;
+  coloringPageUrl: string | null;
+  status: 'complete' | 'partial' | 'failed';
+  demo: boolean;
+}
+
+/** transform-image response (docs/05 §4). */
+export interface TransformData {
+  outputImageUrl: string;
+  style: TransformStyle;
   provider: string;
   status: string;
   demo: boolean;
@@ -124,5 +158,39 @@ export async function generateImage(input: GenerateInput): Promise<GenerationDat
     safePrompt: input.safePrompt,
     ageRange: input.ageRange,
     options: input.options ?? { lineArt: true },
+  });
+}
+
+/** Source image: exactly one of `uploadRef` (storage path) or `imageUrl`. */
+export interface ImageSourceInput {
+  uploadRef?: string;
+  imageUrl?: string;
+}
+
+export interface ProcessInput extends ImageSourceInput {
+  styles?: TransformStyle[];
+}
+
+export async function processUploadedImage(input: ProcessInput): Promise<ProcessData> {
+  const source = input.uploadRef ?? input.imageUrl ?? '';
+  if (!supabase) return mockProcessUpload(source, input.styles);
+  return invokeEnvelope<ProcessData>('process-uploaded-image', {
+    uploadRef: input.uploadRef,
+    imageUrl: input.imageUrl,
+    styles: input.styles,
+  });
+}
+
+export interface TransformInput extends ImageSourceInput {
+  style: TransformStyle;
+}
+
+export async function transformImage(input: TransformInput): Promise<TransformData> {
+  const source = input.uploadRef ?? input.imageUrl ?? '';
+  if (!supabase) return mockTransform(source, input.style);
+  return invokeEnvelope<TransformData>('transform-image', {
+    uploadRef: input.uploadRef,
+    imageUrl: input.imageUrl,
+    style: input.style,
   });
 }
