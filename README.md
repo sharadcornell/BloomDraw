@@ -1,11 +1,11 @@
 # BloomDraw 🌸✏️
 
-> **Milestones 1–8 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, age onboarding, themed tabs, a **content library** (8 categories, ~100 drawings / 20 heroes, Explore filters, Detail, 4/6/8-step tutorials), **persistent local state** (age, favorites, recents), a **Supabase foundation** (guarded offline-safe client, migrations, generated seed, anonymous session + storage services), the **AI Edge Functions** (four Deno functions + provider-agnostic `AIProvider` with OpenAI/Replicate/**Mock**, prompt moderation, rate limiting, child-safe errors — all server-side, no secrets in the bundle), the **mobile AI prompt flow** (Create → prompt → moderate → generate image + line art → result → recents; safe/rewritten/blocked), and the **upload/camera flow** (gallery or camera → process → pick a drawing style → recents, with a full zero-key demo). The app runs fully in local/mock mode without Supabase or AI keys. Projector preview (M9) begins next, pending approval.
+> **Milestones 1–9 complete.** Bootable Expo + TypeScript + Expo Router app with an animated splash, age onboarding, themed tabs, a **content library** (8 categories, ~100 drawings / 20 heroes, Explore filters, Detail, 4/6/8-step tutorials), **persistent local state** (age, favorites, recents), a **Supabase foundation** (guarded offline-safe client, migrations, generated seed, anonymous session + storage services), the **AI Edge Functions** (four Deno functions + provider-agnostic `AIProvider` with OpenAI/Replicate/**Mock**, prompt moderation, rate limiting, child-safe errors — all server-side, no secrets in the bundle), the **mobile AI prompt flow** (prompt → moderate → generate image + line art → result → recents), the **upload/camera flow** (gallery or camera → process → pick a drawing style → recents), and the **Projector Preview** (paper-aspect canvas with rotate / zoom / brightness / high-contrast / paper-size, reachable from every result + a Home shortcut; "connect a projector — coming soon", no fake pairing). The app runs fully in local/mock mode without Supabase or AI keys. Polish (M10) begins next, pending approval.
 
 **BloomDraw** is an AI-powered drawing companion for kids (ages 3–12) that turns preloaded lessons, photos, and text prompts into traceable art, sketches, cartoons, and projector-ready drawing experiences. Built for parents and gift-buyers as a premium, kid-safe creative-learning app — and as the software companion to a future BloomDraw drawing **projector**.
 
 ## Status
-🟢 **Milestones 1–8 complete** — project setup + app shell + content library + local state + Supabase foundation + AI Edge Functions + AI prompt flow + **upload/camera flow** (gallery/camera → process → variant selection → recents; full zero-key demo). All checks pass (lint, typecheck, **118/118 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 9–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
+🟢 **Milestones 1–9 complete** — project setup + app shell + content library + local state + Supabase foundation + AI Edge Functions + AI prompt flow + upload/camera flow + **Projector Preview** (paper-aspect canvas + rotate/zoom/brightness/contrast/paper controls; coming-soon hardware, no fake pairing). All checks pass (lint, typecheck, **128/128 tests**, expo-doctor 18/18, Metro boots, iOS bundle exports). 🟡 Milestones 10–12 not started (awaiting approval). See [`docs/10-handoff.md`](docs/10-handoff.md).
 
 ## What it does (V1 / MVP)
 - 📚 Browse a library of ~100 guided drawings across 8 categories (Alphabets, Numbers, Animals, Vehicles, Space, Nature, Curriculum, Cards).
@@ -63,7 +63,7 @@ Today this boots to a placeholder Home screen (Milestone 1). As features land, w
 | `npm run lint` | ESLint (`eslint .`) | ✅ M1 |
 | `npm run typecheck` | `tsc --noEmit` (strict) | ✅ M1 |
 | `npx expo-doctor` | Expo health check | ✅ M1 |
-| `npm run test` | Jest unit tests (jest-expo) — content + seed + state + services + edge fns + AI + upload (118 tests) | ✅ M3–M8 |
+| `npm run test` | Jest unit tests (jest-expo) — content + seed + state + services + edge fns + AI + upload + projector (128 tests) | ✅ M3–M9 |
 | `npm run seed:gen` | Regenerate `supabase/seed.sql` from `src/content` (source of truth) | ✅ M5 |
 | `supabase functions serve` | Serve the 4 Edge Functions locally (mock mode) — needs Deno + Supabase CLI | 📋 M6 (docs/09 §4) |
 
@@ -78,12 +78,13 @@ app/         Expo Router routes (root convention)
   onboarding.tsx         first-run age picker
   (tabs)/                Home · Explore · Create · Recents · Settings
   create/                ai.tsx · ai-result.tsx (M7) · upload.tsx · variants.tsx (M8)
+  projector.tsx          Projector Preview (M9)
 src/
   theme/                 tokens · theme · fonts · useTheme
-  components/            shared UI components incl. AiArtView, Banner, VariantCard (+ index barrel)
-  state/                 useAppStore · useFavoritesStore · useRecentsStore (persisted) · useUploadStore (ephemeral)
+  components/            shared UI components incl. AiArtView, Banner, VariantCard, ProjectorCanvas (+ index barrel)
+  state/                 useAppStore · useFavoritesStore · useRecentsStore (persisted) · useUploadStore · useProjectorStore (ephemeral)
   hooks/                 useAiGeneration (AI flow state machine)
-  lib/                   strings · placeholders · image (isRenderableImage)
+  lib/                   strings · placeholders · image (isRenderableImage) · projector (preview model + helpers)
   types/                 shared types (Category, DrawingItem, DrawingStep, RecentCreation, …)
   content/               categories + 8 item files + queries + validate + seed (8 cats, 100 items)
   services/              supabase · session · storage · edge · ai · aiMock · upload  (offline-safe)

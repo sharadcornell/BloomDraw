@@ -8,13 +8,13 @@ import {
   BackHeader,
   Banner,
   Button,
-  Card,
   Chip,
   EmptyState,
   Screen,
   VariantCard,
 } from '@/components';
 import { strings } from '@/lib/strings';
+import { previewFromUpload } from '@/lib/projector';
 import {
   buildUploadRecentInput,
   variantUrl,
@@ -22,7 +22,7 @@ import {
   type UploadResultData,
   type VariantKey,
 } from '@/services/upload';
-import { recents, useRecentsStore, useUploadStore } from '@/state';
+import { recents, useProjectorStore, useRecentsStore, useUploadStore } from '@/state';
 import type { RecentCreation } from '@/types';
 import { theme } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
@@ -49,6 +49,7 @@ export default function VariantsScreen() {
 
   const draft = useUploadStore((s) => s.draft);
   const recentItem = useRecentsStore((s) => (id ? s.recents.find((r) => r.id === id) : undefined));
+  const setProjectorSource = useProjectorStore((s) => s.setSource);
   const data = useMemo<UploadResultData | null>(
     () => (id ? fromRecent(recentItem) : draft),
     [id, recentItem, draft],
@@ -98,6 +99,11 @@ export default function VariantsScreen() {
     setSavedStyle(selected);
   };
 
+  const openProjector = () => {
+    setProjectorSource(previewFromUpload(data, selected, `${strings.upload.recentTitle} · ${labels[selected]}`));
+    router.push('/projector');
+  };
+
   return (
     <Screen scroll>
       <BackHeader
@@ -135,16 +141,6 @@ export default function VariantsScreen() {
         </AppText>
       ) : null}
 
-      <Card>
-        <View style={styles.projectorRow}>
-          <AppText variant="h3">📽️</AppText>
-          <AppText variant="bodyStrong" color={theme.color.ink.muted} style={styles.flex}>
-            {strings.ai.projectorCta}
-          </AppText>
-          <Chip label={strings.create.comingSoon} accent={theme.color.brand.sky} />
-        </View>
-      </Card>
-
       <View style={styles.actions}>
         <Button
           label={isSaved ? strings.upload.saved : `${strings.upload.save} · ${labels[selected]}`}
@@ -152,9 +148,10 @@ export default function VariantsScreen() {
           onPress={onSave}
           disabled={isSaved}
         />
+        <Button label={strings.projector.open} variant="secondary" icon="tv-outline" onPress={openProjector} />
         <Button
           label={strings.upload.tryAnother}
-          variant="secondary"
+          variant="ghost"
           icon="images-outline"
           onPress={() => router.replace('/create/upload')}
         />
@@ -165,8 +162,6 @@ export default function VariantsScreen() {
 
 const styles = StyleSheet.create({
   notFound: { flex: 1, justifyContent: 'center' },
-  flex: { flex: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.space.md, justifyContent: 'space-between' },
-  projectorRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.md },
   actions: { gap: theme.space.md },
 });

@@ -8,7 +8,6 @@ import {
   AppText,
   BackHeader,
   Button,
-  Card,
   Chip,
   DifficultyDots,
   DrawingThumbnail,
@@ -17,7 +16,9 @@ import {
   SectionHeader,
 } from '@/components';
 import { getCategory, getItemBySlug } from '@/content';
-import { useFavoritesStore, useIsFavorite } from '@/state';
+import { strings } from '@/lib/strings';
+import { previewFromDrawing } from '@/lib/projector';
+import { useFavoritesStore, useIsFavorite, useProjectorStore } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 
 /** Drawing Detail — final/trace placeholders, meta, and tutorial entry (docs/02 §3). */
@@ -28,6 +29,7 @@ export default function DrawingDetailScreen() {
   // Hooks must run unconditionally (before the not-found early return).
   const faved = useIsFavorite(slug ?? '');
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const setProjectorSource = useProjectorStore((s) => s.setSource);
 
   if (!item) {
     return (
@@ -47,6 +49,11 @@ export default function DrawingDetailScreen() {
 
   const accent = getCategoryAccent(item.categorySlug);
   const category = getCategory(item.categorySlug);
+
+  const openProjector = () => {
+    setProjectorSource(previewFromDrawing(item));
+    router.push('/projector');
+  };
 
   return (
     <Screen scroll>
@@ -98,25 +105,20 @@ export default function DrawingDetailScreen() {
           icon="play"
           onPress={() => router.push(`/tutorial/${item.slug}`)}
         />
-        <Card>
-          <View style={styles.projectorRow}>
-            <AppText variant="h3">📽️</AppText>
-            <AppText variant="bodyStrong" color={theme.color.ink.muted} style={styles.flex}>
-              Projector Preview
-            </AppText>
-            <Chip label="Coming soon" accent={theme.color.brand.sky} />
-          </View>
-        </Card>
+        <Button
+          label={strings.projector.open}
+          variant="secondary"
+          icon="tv-outline"
+          onPress={openProjector}
+        />
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   notFound: { flex: 1, justifyContent: 'center' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.md, flexWrap: 'wrap' },
   section: { gap: theme.space.md },
   actions: { gap: theme.space.md },
-  projectorRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.md },
 });

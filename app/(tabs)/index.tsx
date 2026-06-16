@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,7 +9,6 @@ import {
   AppText,
   Button,
   Card,
-  Chip,
   DemoModeBadge,
   DrawingCard,
   EmptyState,
@@ -18,8 +18,9 @@ import {
 } from '@/components';
 import { CATEGORIES, getFeaturedItems, getItemBySlug, getRecommendedItems } from '@/content';
 import { CREATE_OPTIONS } from '@/lib/placeholders';
+import { defaultPreview } from '@/lib/projector';
 import { strings } from '@/lib/strings';
-import { useAppStore, useFavoritesStore, useRecentsStore } from '@/state';
+import { useAppStore, useFavoritesStore, useProjectorStore, useRecentsStore } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
 import type { DrawingItem } from '@/types';
@@ -33,6 +34,12 @@ export default function HomeScreen() {
 
   const favoriteSlugs = useFavoritesStore((s) => s.favorites);
   const recents = useRecentsStore((s) => s.recents);
+  const setProjectorSource = useProjectorStore((s) => s.setSource);
+
+  const openProjector = () => {
+    setProjectorSource(defaultPreview());
+    router.push('/projector');
+  };
 
   const featured = getFeaturedItems().slice(0, 10);
   const recommended = getRecommendedItems(selectedAgeRange, 8);
@@ -221,9 +228,9 @@ export default function HomeScreen() {
         )}
       </Animated.View>
 
-      {/* Projector preview entry (placeholder) */}
+      {/* Projector preview entry — opens a safe default demo preview */}
       <Animated.View entering={FadeInDown.delay(540).duration(400)} style={styles.section}>
-        <Card accent={theme.color.brand.sky}>
+        <Card accent={theme.color.brand.sky} onPress={openProjector}>
           <View style={styles.projectorRow}>
             <AppText variant="h2">📽️</AppText>
             <View style={styles.flex}>
@@ -231,10 +238,10 @@ export default function HomeScreen() {
                 {strings.home.projector}
               </AppText>
               <AppText variant="caption" color={theme.color.ink.muted}>
-                Project your art onto paper to trace.
+                See how your art will look projected onto paper to trace.
               </AppText>
             </View>
-            <Chip label={strings.create.comingSoon} accent={theme.color.brand.sky} />
+            <Ionicons name="chevron-forward" size={22} color={theme.color.brand.sky} />
           </View>
         </Card>
       </Animated.View>

@@ -103,6 +103,22 @@ export const strings = {
       cartoon: 'Cartoon',
     },
   },
+  projector: {
+    title: 'Projector Preview',
+    subtitle: 'This is what the projector will shine onto paper to trace.',
+    open: 'Projector Preview',
+    rotate: 'Rotate',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    reset: 'Reset',
+    brightness: 'Brightness',
+    contrast: 'High contrast',
+    paper: 'Paper',
+    comingSoonTitle: 'Connect a projector — coming soon',
+    comingSoonBody:
+      'The BloomDraw projector is on its way. This preview gets your art ready to shine onto real paper to trace.',
+    sourceLabels: { drawing: 'Lesson', ai: 'AI art', upload: 'Photo' },
+  },
   recents: {
     title: 'Recents',
   },

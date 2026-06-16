@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–8 complete — Milestones 9–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow.
+> Status: **Milestones 1–9 complete — Milestones 10–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow + M9 projector preview.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1–M7** + **M8 (Upload / Camera Flow)** complete. The app boots → splash → onboarding → tabs, browses content, persists local state, runs the **AI creation flow** (M7), and now the **photo creation flow**: Create → Add a photo (gallery or camera) → preview → process → **Variant Selection** (Original / Line art / Pencil sketch / Coloring page / Cartoon) → save the chosen style to recents (reopenable). Friendly processing/long-running/error copy; permission-denied + no-camera fall back to gallery; **demo/mock works with zero keys** (the real photo as Original + deterministic style placeholders + Demo badge). **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No projector controls yet (M9).
-- **Awaiting:** explicit approval to proceed to **Milestone 9 (Projector Preview)**.
+- **Phase:** Documentation + **M1–M8** + **M9 (Projector Preview)** complete. The app boots → splash → onboarding → tabs, browses content, persists local state, runs the **AI creation flow** (M7) and **photo creation flow** (M8), and now any drawing / AI result / uploaded variant opens in a polished **Projector Preview**: a paper-aspect canvas with rotate / zoom / brightness / high-contrast(trace) / paper-size / reset controls and a "Connect a projector — coming soon" note (no fake pairing). Reachable from Drawing Detail, Tutorial (final), AI Result, Variant Selection, and a safe default from Home. **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash); the preview works on placeholders, demo art, and real images alike.
+- **Awaiting:** explicit approval to proceed to **Milestone 10 (Polish)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -310,6 +310,39 @@
 - Configured-but-offline maps an upload failure to the child-safe storage/"nap" retry (pragmatic, no `netinfo` dep) — same documented follow-up as M7.
 - Real provider transformed outputs are returned/displayed as their URLs; persisting to the private `ai-generations` bucket + signed URLs remains a pre-pilot task (carried from M6).
 
+## Milestone 9 — Projector Preview (✅ complete, 2026-06-15)
+
+**What was built** — a polished, projection-ready preview that makes the future hardware vision obvious **without** any real Bluetooth / Wi-Fi / pairing (all explicitly out of scope).
+
+- **Route** (`app/projector.tsx`): a full-canvas Projector Preview. Reads the chosen `PreviewSource` from an ephemeral store and **falls back to a safe default** (a featured drawing) if opened without one — never crashes on a missing/invalid source.
+- **Preview model + helpers** (`src/lib/projector.ts`, pure/unit-tested): `PreviewSource` (title, kind, url, outlineUrl, emoji, accent, demo) + builders `previewFromDrawing` (final or `trace`), `previewFromRecent` (ai / upload / preloaded, null-safe), `previewFromUpload` (live variant), `defaultPreview`. Control-state helpers: `clampZoom` (1–4), `rotateBy` (90° wrap), `cycleIndex`, `BRIGHTNESS_LEVELS`, `PAPER_SIZES`, `INITIAL_PROJECTOR_STATE` / `resetProjectorState`.
+- **Canvas** (`src/components/ProjectorCanvas.tsx`): a white **paper surface** at the selected aspect (A4 / Letter / Square), the art centered with **rotate + zoom** transforms, a **brightness overlay**, and a **high-contrast mode** that prefers the line-art/trace image (or a branded outline placeholder). Real (loadable) images render via `expo-image`; demo/SVG/preloaded sources render a branded placeholder (reuses `isRenderableImage`).
+- **Controls** (big, kid-friendly icon buttons; **buttons over gestures for stability**): Rotate (90°), Zoom out / Zoom in, Brightness (Dim/Normal/Bright), High-contrast toggle, Paper size (A4/Letter/Square), and Reset. Light haptics on each.
+- **Coming-soon hardware state:** a clear "Connect a projector — coming soon" card explaining the preview prepares art for a future BloomDraw projector. **No fake pairing UI, no Bluetooth scan, no device list.**
+- **Handoff store** (`src/state/useProjectorStore.ts`, not persisted): an entry screen sets the `PreviewSource`, then navigates to `/projector`. No cloud dependency; works fully in mock/demo.
+- **Entry points wired** (existing "coming soon" placeholders replaced): **Drawing Detail** (final), **Tutorial** final step (trace), **AI Result** (image/line-art recent), **Variant Selection** (selected style, even pre-save), and **Home** (opens a safe default demo preview). Recents reopen the AI Result / Variant Selection screens, which carry the projector entry — so recents reach it transitively. No existing navigation was broken.
+- **UI/UX:** header + source-kind chip + source label, Demo badge when `demo:true`, reset + back, bright/premium look (no dark/scary palette), safe-area aware (`edges: top+bottom`).
+
+**Scope guardrails honored:** no Bluetooth/Wi-Fi/pairing, no real projection, no device scanning, no payments/login/B2B, no new AI/upload features, no image moderation, no generated tutorials. "Brightness" is a preview overlay (not device brightness); paper-size is a frame-aspect preview.
+
+**Tests (`src/lib/__tests__/projector.test.ts`)** — +10: source normalization (drawing final/trace, AI recent, upload recent, **null-safe** for missing, live upload with missing-variant fallback, safe default) + control helpers (zoom clamp, rotate wrap, cycle indices, reset independence). **Total suite 128/128.**
+
+**Commands run & results (M9)**
+| Command | Result |
+| --- | --- |
+| `npm test` | ✅ **128/128** (16 suites; +10 projector tests) |
+| `npm run lint` | ✅ exit 0, no findings/warnings |
+| `npm run typecheck` | ✅ exit 0 (after typed-routes regen via Metro) |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npm run start` (Metro) | ✅ boots, regenerated the `/projector` route type |
+| `npx expo export -p ios` | ✅ bundled (5.0MB Hermes bundle) |
+
+**Warnings / unresolved (non-blocking, M9)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- **Pinch-to-zoom is intentionally not implemented** — zoom/rotate are button-based for reliability (the milestone prioritized stability over gestures). Gesture zoom can be a Milestone-10 polish enhancement.
+- "Brightness" + "paper size" are **preview-only** affordances (overlay dim/brighten; frame aspect) — they convey the projector idea but do not change device brightness or guarantee print scale; real paper calibration is a hardware-era task.
+- Not run on a device/simulator here; validated via Metro boot + iOS export + unit tests. Recommend a quick simulator pass of each entry point + every control.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -317,7 +350,7 @@ Documentation set under `/docs` plus root config drafts:
 - `README.md` (draft)
 - `.env.example` (draft)
 
-App shell, content library, local state, the Supabase foundation (M5), the AI Edge Functions (M6), the mobile AI prompt flow (M7), and the upload/camera flow (M8) are **implemented**. Remaining feature code — projector preview (M9), polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
+App shell, content library, local state, the Supabase foundation (M5), the AI Edge Functions (M6), the mobile AI prompt flow (M7), the upload/camera flow (M8), and the Projector Preview (M9) are **implemented**. Remaining feature code — polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
 
 ## Files changed
 
@@ -466,17 +499,32 @@ app.json                      (updated — expo-image-picker plugin + camera/pho
 README.md / docs/10-handoff.md (updated for M8)
 ```
 
-## How to run (current — Milestone 8)
+**Milestone 9 — Projector Preview (new/added):**
+```
+app/projector.tsx                                       (new — Projector Preview screen + controls)
+src/lib/projector.ts                                    (new — PreviewSource model, builders, control helpers)
+src/components/ProjectorCanvas.tsx                      (new) + components/index.ts barrel
+src/state/useProjectorStore.ts                          (new — ephemeral source hand-off) + state/index.ts barrel
+src/lib/__tests__/projector.test.ts                     (new — 10 tests)
+src/lib/strings.ts            (updated — `projector` copy)
+app/drawing/[slug].tsx · app/tutorial/[slug].tsx        (updated — projector entry replaces "coming soon")
+app/create/ai-result.tsx · app/create/variants.tsx      (updated — projector entry replaces "coming soon")
+app/(tabs)/index.tsx          (updated — Home projector card opens a safe default preview)
+README.md / docs/10-handoff.md (updated for M9)
+```
+
+## How to run (current — Milestone 9)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
-npm test                                               # content + seed + state + services + edge fns + AI + upload (118 tests)
+npm test                                               # content + seed + state + services + edge fns + AI + upload + projector (128 tests)
 npm run seed:gen                                       # regenerate supabase/seed.sql from src/content
 ```
 Try the creation flows with zero backend:
 - **AI:** Create → Generate with AI → type/tap an idea → Make my drawing. Safe → demo image + line art (Demo badge); "dragon fighting with blood" → kid-friendly rewrite banner; clearly-unsafe → block message.
 - **Photo:** Create → Upload a photo (or Take a photo) → pick → Use this photo → Pick a style (Original / Line art / Pencil sketch / Coloring page / Cartoon) → Use this style.
-Both save to **Recents** (reopenable). (Camera needs a physical device; the simulator falls back to gallery.)
+- **Projector:** open **Projector Preview** from a Drawing, the Tutorial's last step, an AI Result, a Variant Selection, or the Home card — rotate / zoom / brightness / high-contrast / paper size / reset.
+Creations save to **Recents** (reopenable). (Camera needs a physical device; the simulator falls back to gallery.)
 To enable the backend: set `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`, apply migrations + `seed.sql` to a Supabase project (docs/09 §3). To serve/deploy the **Edge Functions** (needs Deno + Supabase CLI): `supabase functions serve` (smoke in mock mode) → `supabase functions deploy <name>` (docs/09 §4). (Node ≥ 22.13 recommended.)
 
 ## How to configure Supabase
@@ -504,6 +552,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 6 checks (all pass):** `npm test` (**86/86** — +54 Edge-Function tests across 7 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors; `supabase/functions` excluded — Deno-typed), `npx expo-doctor` (18/18), `npx expo export -p ios` (4.9MB bundle; server code excluded). Deno + Supabase CLI not installed → `deno check` / `supabase functions serve` smoke documented for later (docs/09 §4).
 - **Milestone 7 checks (all pass):** `npm test` (**103/103** — +17 AI-flow tests across 3 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Not run on a device/simulator here.
 - **Milestone 8 checks (all pass):** `npm test` (**118/118** — +15 upload tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Camera/gallery/upload not exercised on-device here.
+- **Milestone 9 checks (all pass):** `npm test` (**128/128** — +10 projector tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates the `/projector` route type), `npx expo export -p ios` (5.0MB bundle). Not exercised on-device here.
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -524,8 +573,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 9 (Projector Preview: full-screen canvas with rotate / zoom / brightness / high-contrast / paper-size, reachable from Detail / Tutorial / AI Result / Variant Selection / Recents / Favorites, + "Connect projector — coming soon").** (Milestones 1–8 are complete; AI Result + Variant Selection already host a Projector "coming soon" entry point to replace.)
-2. Execute Milestones 9→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 10 (Polish: animation pass, tablet layouts, accessibility, empty/error/loading refinement, visual consistency vs `06`, dead-code/perf; optional `expo-speech` narration of the centralized strings in the creation flows — deferred from M7/M9, low-risk only).** (Milestones 1–9 are complete.)
+2. Execute Milestones 10→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

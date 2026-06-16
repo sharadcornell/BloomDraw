@@ -15,7 +15,8 @@ import {
   SectionHeader,
 } from '@/components';
 import { strings } from '@/lib/strings';
-import { useRecentsStore } from '@/state';
+import { previewFromRecent } from '@/lib/projector';
+import { useProjectorStore, useRecentsStore } from '@/state';
 import { theme } from '@/theme/theme';
 
 /** AI Result (docs/02 §6) — image + line art + safety context, saved to recents. */
@@ -23,6 +24,7 @@ export default function AiResultScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = useRecentsStore((s) => s.recents.find((r) => r.id === id));
+  const setProjectorSource = useProjectorStore((s) => s.setSource);
 
   if (!item || item.type !== 'ai_generation') {
     return (
@@ -41,6 +43,12 @@ export default function AiResultScreen() {
   }
 
   const seed = item.safePrompt || item.prompt || item.title;
+
+  const openProjector = () => {
+    const source = previewFromRecent(item);
+    if (source) setProjectorSource(source);
+    router.push('/projector');
+  };
 
   return (
     <Screen scroll>
@@ -86,21 +94,12 @@ export default function AiResultScreen() {
         </View>
       </Card>
 
-      <Card>
-        <View style={styles.projectorRow}>
-          <AppText variant="h3">📽️</AppText>
-          <AppText variant="bodyStrong" color={theme.color.ink.muted} style={styles.flex}>
-            {strings.ai.projectorCta}
-          </AppText>
-          <Chip label={strings.create.comingSoon} accent={theme.color.brand.sky} />
-        </View>
-      </Card>
-
       <View style={styles.actions}>
-        <Button label={strings.ai.tryAgain} icon="refresh" onPress={() => router.replace('/create/ai')} />
+        <Button label={strings.projector.open} icon="tv-outline" onPress={openProjector} />
+        <Button label={strings.ai.tryAgain} variant="secondary" icon="refresh" onPress={() => router.replace('/create/ai')} />
         <Button
           label="Back to Create"
-          variant="secondary"
+          variant="ghost"
           icon="grid-outline"
           onPress={() => router.replace('/create')}
         />
@@ -112,8 +111,6 @@ export default function AiResultScreen() {
 const styles = StyleSheet.create({
   notFound: { flex: 1, justifyContent: 'center' },
   section: { gap: theme.space.md },
-  flex: { flex: 1 },
   prompts: { gap: theme.space.md },
-  projectorRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.md },
   actions: { gap: theme.space.md },
 });

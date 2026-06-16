@@ -8,13 +8,15 @@ import {
   AppText,
   BackHeader,
   Button,
-  Chip,
   DrawingThumbnail,
   EmptyState,
   Screen,
   StepProgress,
 } from '@/components';
 import { getItemBySlug } from '@/content';
+import { strings } from '@/lib/strings';
+import { previewFromDrawing } from '@/lib/projector';
+import { useProjectorStore } from '@/state';
 import { getCategoryAccent, theme } from '@/theme/theme';
 
 /** Step-by-Step Tutorial — works for 4 / 6 / 8 step items (docs/02 §4). */
@@ -23,6 +25,7 @@ export default function TutorialScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const item = slug ? getItemBySlug(slug) : undefined;
   const [stepIndex, setStepIndex] = useState(0);
+  const setProjectorSource = useProjectorStore((s) => s.setSource);
 
   if (!item) {
     return (
@@ -57,6 +60,11 @@ export default function TutorialScreen() {
 
   const goBack = () => setStepIndex((i) => Math.max(0, i - 1));
 
+  const openProjector = () => {
+    setProjectorSource(previewFromDrawing(item, { trace: true }));
+    router.push('/projector');
+  };
+
   return (
     <Screen>
       <BackHeader title={item.title} />
@@ -84,7 +92,13 @@ export default function TutorialScreen() {
             <AppText variant="h3" color={theme.color.brand.violet}>
               🎉 You did it!
             </AppText>
-            <Chip label="Projector Preview · soon" accent={theme.color.brand.sky} />
+            <Button
+              label={strings.projector.open}
+              variant="secondary"
+              icon="tv-outline"
+              fullWidth={false}
+              onPress={openProjector}
+            />
           </View>
         ) : null}
       </Animated.View>

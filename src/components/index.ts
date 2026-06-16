@@ -14,6 +14,7 @@ export { DrawingThumbnail } from './DrawingThumbnail';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { Loader } from './Loader';
+export { ProjectorCanvas } from './ProjectorCanvas';
 export { RecentCard } from './RecentCard';
 export { Screen } from './Screen';
 export { SectionHeader } from './SectionHeader';
