@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -41,13 +42,17 @@ export default function HomeScreen() {
     router.push('/projector');
   };
 
-  const featured = getFeaturedItems().slice(0, 10);
-  const recommended = getRecommendedItems(selectedAgeRange, 8);
-  const favoriteItems = favoriteSlugs
-    .map((slug) => getItemBySlug(slug))
-    .filter((i): i is DrawingItem => Boolean(i))
-    .slice(0, 10);
-  const recentPreview = recents.slice(0, 10);
+  const featured = useMemo(() => getFeaturedItems().slice(0, 10), []);
+  const recommended = useMemo(() => getRecommendedItems(selectedAgeRange, 8), [selectedAgeRange]);
+  const favoriteItems = useMemo(
+    () =>
+      favoriteSlugs
+        .map((slug) => getItemBySlug(slug))
+        .filter((i): i is DrawingItem => Boolean(i))
+        .slice(0, 10),
+    [favoriteSlugs],
+  );
+  const recentPreview = useMemo(() => recents.slice(0, 10), [recents]);
   const categoryWidth = isTablet ? '23%' : '47%';
 
   return (

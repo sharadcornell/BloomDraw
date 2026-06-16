@@ -1,11 +1,11 @@
 # 10 — Handoff
 
-> Status: **Milestones 1–9 complete — Milestones 10–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
-> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow + M9 projector preview.
+> Status: **Milestones 1–10 complete — Milestones 11–12 not started (awaiting approval).** · Owner: Delivery · Last updated: 2026-06-15
+> Living document, updated as milestones complete. Records docs + M1 setup + M2 app shell + M3 content library + M4 local state + M5 Supabase foundation + M6 AI Edge Functions + M7 AI prompt flow + M8 upload/camera flow + M9 projector preview + M10 polish.
 
 ## Current state (2026-06-15)
-- **Phase:** Documentation + **M1–M8** + **M9 (Projector Preview)** complete. The app boots → splash → onboarding → tabs, browses content, persists local state, runs the **AI creation flow** (M7) and **photo creation flow** (M8), and now any drawing / AI result / uploaded variant opens in a polished **Projector Preview**: a paper-aspect canvas with rotate / zoom / brightness / high-contrast(trace) / paper-size / reset controls and a "Connect a projector — coming soon" note (no fake pairing). Reachable from Drawing Detail, Tutorial (final), AI Result, Variant Selection, and a safe default from Home. **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash); the preview works on placeholders, demo art, and real images alike.
-- **Awaiting:** explicit approval to proceed to **Milestone 10 (Polish)**.
+- **Phase:** Documentation + **M1–M9** + **M10 (Polish)** complete. All MVP flows are built and now refined for a premium, cohesive, demo-ready feel: unified demo badges across creation/result/projector screens, a clearer Settings demo-mode explanation, OS large-text tolerance (per-variant font-scaling caps), memoized content lists (Home / Explore / Favorites), gentle micro-interactions (projector canvas entrance, success haptics on generation + variant save), and centralized child-safe copy. **The app still runs fully in local/mock mode with no Supabase/AI env** (no crash). No new product scope was added.
+- **Awaiting:** explicit approval to proceed to **Milestone 11 (Testing & fixing)**.
 - **Repo:** git initialized at M1; local commits only, no remote configured, nothing pushed.
 
 ## Milestone 1 — Project Setup (✅ complete, 2026-06-15)
@@ -343,6 +343,41 @@
 - "Brightness" + "paper size" are **preview-only** affordances (overlay dim/brighten; frame aspect) — they convey the projector idea but do not change device brightness or guarantee print scale; real paper calibration is a hardware-era task.
 - Not run on a device/simulator here; validated via Metro boot + iOS export + unit tests. Recommend a quick simulator pass of each entry point + every control.
 
+## Milestone 10 — Polish (✅ complete, 2026-06-15)
+
+**What was polished** — a refinement pass (no new product scope) to make the MVP feel premium, cohesive, kid-friendly, and demo-ready.
+
+- **Visual consistency / demo badges:** unified the "Demo mode" indicator — AI Result, Variant Selection, and Projector Preview now use the shared `DemoModeBadge` (`force={…demo}`) instead of bespoke chips, so the demo signal looks identical everywhere and reflects each output's actual `demo` flag.
+- **Accessibility — font scaling:** `AppText` now applies a per-variant `maxFontSizeMultiplier` (headings scale less, body/captions more), so the OS "larger text" setting stays readable without breaking layouts (docs/06 §11). `allowFontScaling` remains on; callers can still override.
+- **Settings clarity:** the kid-safe AI card now shows the demo badge **only when actually in demo mode** plus a plain-language explanation ("Demo mode is on — creations use friendly sample art…"), or a "Connected — creations use the live art helper." line when configured. "Manage" / "Clear" labels centralized.
+- **Performance:** memoized the derived content lists that recomputed each render — Home (`featured`/`recommended`/`favoriteItems`/`recentPreview`), Explore (`results`), Favorites (`items`). No architecture changes.
+- **Micro-interactions (stable, Reanimated-direct):** a gentle `FadeIn` entrance for the Projector canvas, and brief **success haptics** at the two "it worked!" moments — AI generation complete and saving a chosen photo variant. Existing card press-scale + entrance animations were already consistent and left intact.
+- **Copy:** centralized the Explore empty-state and Settings demo copy into `src/lib/strings.ts`; child-safe AI / upload / projector / error copy was already centralized and consistent.
+- **Demo-readiness:** verified no raw technical errors/secrets reach the child surface, the projector "coming soon" is honest (no fake pairing), and every flow degrades gracefully with no backend (re-confirmed by the suite + the in-code navigation checklist).
+
+**Decisions / deferrals (documented):**
+- **Narration (optional, §8): deferred to a future pass.** `expo-speech` is not installed; adding it + mute/replay state is a new native dependency and risk against the "low-risk only / defer if risky" guidance. No recorded voice; consistent with the M7/M9 deferral.
+- **Explore virtualization (FlatList): intentionally NOT converted.** The 100-item grid was kept as a memoized `ScrollView` grid because a `numColumns` FlatList refactor (column widths, last-row spacers, header padding, category-row bleed) can't be layout-verified without a device, and the milestone prioritizes stability ("only if it improves without instability"). Memoization gives the safe win; virtualization remains a candidate for a device-backed pass.
+- **Reduced-motion:** font-scaling is handled; broad reduce-motion wiring across every entrance animation was left as a future a11y pass to avoid destabilizing churn (entrance animations are already gentle/short).
+
+**Manual navigation checklist (in-code):** every `router.push`/`replace` target maps to an existing route — onboarding, Home, Explore, Drawing Detail, Tutorial, Favorites, Recents, Create, AI Prompt, AI Result, Upload, Variant Selection, Projector, Settings all reachable; verified by enumerating nav targets vs route files.
+
+**Tests:** no new logic added → **no brittle visual snapshots added** (per scope); the existing suite (incl. the no-secret-in-client scan) stays green. **Total suite 128/128.**
+
+**Commands run & results (M10)**
+| Command | Result |
+| --- | --- |
+| `npm test` | ✅ **128/128** (16 suites) |
+| `npm run lint` | ✅ exit 0, no findings/warnings |
+| `npm run typecheck` | ✅ exit 0 (no new routes → no regen needed) |
+| `npx expo-doctor` | ✅ 18/18 |
+| `npx expo export -p ios` | ✅ bundled (5.0MB Hermes bundle) |
+
+**Warnings / unresolved (non-blocking, M10)**
+- `EBADENGINE` (Node 22.12 vs RN ≥22.13) — carried from M1.
+- Not run on a device/simulator here — visual polish (font scaling at extreme sizes, tablet column widths, haptics) is validated by review + bundle export; recommend a quick device/simulator pass.
+- Narration + Explore virtualization + broad reduced-motion are documented deferrals (above), not regressions.
+
 ## What was built (so far)
 Documentation set under `/docs` plus root config drafts:
 - `docs/00-product-brief.md` … `docs/10-handoff.md` (this file)
@@ -350,7 +385,7 @@ Documentation set under `/docs` plus root config drafts:
 - `README.md` (draft)
 - `.env.example` (draft)
 
-App shell, content library, local state, the Supabase foundation (M5), the AI Edge Functions (M6), the mobile AI prompt flow (M7), the upload/camera flow (M8), and the Projector Preview (M9) are **implemented**. Remaining feature code — polish (M10) — is **planned** (see `07-implementation-plan.md`) but not yet written.
+App shell, content library, local state, the Supabase foundation (M5), the AI Edge Functions (M6), the mobile AI prompt flow (M7), the upload/camera flow (M8), the Projector Preview (M9), and the polish pass (M10) are **implemented**. Remaining work — testing & fixing (M11), final handoff (M12) — is **planned** (see `07-implementation-plan.md`).
 
 ## Files changed
 
@@ -513,7 +548,18 @@ app/(tabs)/index.tsx          (updated — Home projector card opens a safe defa
 README.md / docs/10-handoff.md (updated for M9)
 ```
 
-## How to run (current — Milestone 9)
+**Milestone 10 — Polish (updated):**
+```
+src/components/AppText.tsx     (per-variant maxFontSizeMultiplier — font-scaling a11y)
+app/create/ai-result.tsx · variants.tsx · app/projector.tsx  (unified DemoModeBadge; projector entrance)
+app/(tabs)/settings.tsx        (demo-mode explanation + conditional badge; centralized labels)
+app/(tabs)/index.tsx · explore.tsx · app/favorites.tsx       (useMemo on derived content lists)
+app/create/ai.tsx · variants.tsx (success haptics on generation complete / variant save)
+src/lib/strings.ts             (settings demo copy + Explore empty-state)
+README.md / docs/{08-test-plan,10-handoff}.md (updated for M10)
+```
+
+## How to run (current — Milestone 10)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
@@ -553,6 +599,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 7 checks (all pass):** `npm test` (**103/103** — +17 AI-flow tests across 3 suites), `npm run lint` (0 findings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Not run on a device/simulator here.
 - **Milestone 8 checks (all pass):** `npm test` (**118/118** — +15 upload tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Camera/gallery/upload not exercised on-device here.
 - **Milestone 9 checks (all pass):** `npm test` (**128/128** — +10 projector tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates the `/projector` route type), `npx expo export -p ios` (5.0MB bundle). Not exercised on-device here.
+- **Milestone 10 checks (all pass):** `npm test` (**128/128**, unchanged — polish added no new logic), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, no new routes), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB bundle); in-code navigation checklist confirmed all 14 screens reachable. Not exercised on-device here.
 - The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
 
 ## Data retention (V1)
@@ -573,8 +620,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 10 (Polish: animation pass, tablet layouts, accessibility, empty/error/loading refinement, visual consistency vs `06`, dead-code/perf; optional `expo-speech` narration of the centralized strings in the creation flows — deferred from M7/M9, low-risk only).** (Milestones 1–9 are complete.)
-2. Execute Milestones 10→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Get approval to proceed to Milestone 11 (Testing & fixing: run the full `08-test-plan.md` matrix — automated checks + scripted manual flows on iOS + Android + tablet, a bundle secret-scan for AC-11, Edge-Function `supabase functions serve` smoke, and fix anything found).** (Milestones 1–10 are complete.)
+2. Execute Milestones 11→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 

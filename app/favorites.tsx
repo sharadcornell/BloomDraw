@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, BackHeader, DrawingCard, EmptyState, Screen } from '@/components';
@@ -14,9 +15,11 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const { isTablet } = useTheme();
   const favorites = useFavoritesStore((s) => s.favorites);
-  const items = favorites
-    .map((slug) => getItemBySlug(slug))
-    .filter((i): i is DrawingItem => Boolean(i));
+  const items = useMemo(
+    () =>
+      favorites.map((slug) => getItemBySlug(slug)).filter((i): i is DrawingItem => Boolean(i)),
+    [favorites],
+  );
 
   const cardWidth = isTablet ? '31.5%' : '47.5%';
 

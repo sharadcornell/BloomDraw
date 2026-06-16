@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -8,7 +9,7 @@ import {
   BackHeader,
   Banner,
   Button,
-  Chip,
+  DemoModeBadge,
   EmptyState,
   Screen,
   VariantCard,
@@ -97,6 +98,7 @@ export default function VariantsScreen() {
     const rec = recents.add({ ...buildUploadRecentInput(data, selected), id: savedId });
     setSavedId(rec.id);
     setSavedStyle(selected);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   };
 
   const openProjector = () => {
@@ -106,10 +108,7 @@ export default function VariantsScreen() {
 
   return (
     <Screen scroll>
-      <BackHeader
-        title={strings.upload.variantsTitle}
-        right={data.demo ? <Chip label={strings.demoMode} emoji="✨" accent={theme.color.brand.violetDeep} /> : null}
-      />
+      <BackHeader title={strings.upload.variantsTitle} right={<DemoModeBadge force={data.demo} />} />
 
       <Animated.View entering={FadeInDown.duration(400)}>
         <AppText variant="body" color={theme.color.ink.muted}>

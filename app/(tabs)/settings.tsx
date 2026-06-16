@@ -12,6 +12,7 @@ import {
   DemoModeBadge,
   SectionHeader,
   Screen,
+  useIsDemoMode,
 } from '@/components';
 import { strings } from '@/lib/strings';
 import { useAppStore, useFavoritesStore, useRecentsStore } from '@/state';
@@ -31,6 +32,7 @@ export default function SettingsScreen() {
   const addRecentCreation = useRecentsStore((s) => s.addRecentCreation);
 
   const version = Constants.expoConfig?.version ?? '1.0.0';
+  const isDemo = useIsDemoMode();
 
   const handleReset = () => {
     resetOnboarding();
@@ -73,7 +75,10 @@ export default function SettingsScreen() {
             </AppText>
           </View>
           <View style={styles.demoRow}>
-            <DemoModeBadge force />
+            {isDemo ? <DemoModeBadge force /> : null}
+            <AppText variant="caption" color={theme.color.ink.muted} style={styles.demoExplain}>
+              {isDemo ? strings.settings.demoExplain : strings.settings.connected}
+            </AppText>
           </View>
         </Card>
       </View>
@@ -94,14 +99,14 @@ export default function SettingsScreen() {
 
       {/* Manage local data */}
       <View style={styles.section}>
-        <SectionHeader title="Manage" />
+        <SectionHeader title={strings.settings.manage} />
         <Card>
           <View style={styles.manageRow}>
             <AppText variant="bodyStrong" color={theme.color.ink.body} style={styles.flex}>
               Favorites ({favoritesCount})
             </AppText>
             <Button
-              label="Clear"
+              label={strings.settings.clear}
               variant="ghost"
               fullWidth={false}
               disabled={favoritesCount === 0}
@@ -114,7 +119,7 @@ export default function SettingsScreen() {
               Recents ({recentsCount})
             </AppText>
             <Button
-              label="Clear"
+              label={strings.settings.clear}
               variant="ghost"
               fullWidth={false}
               disabled={recentsCount === 0}
@@ -152,7 +157,8 @@ const styles = StyleSheet.create({
   section: { gap: theme.space.md },
   cardCaption: { marginBottom: theme.space.md },
   safetyRow: { flexDirection: 'row', gap: theme.space.md, alignItems: 'flex-start' },
-  demoRow: { marginTop: theme.space.md },
+  demoRow: { marginTop: theme.space.md, gap: theme.space.sm, alignItems: 'flex-start' },
+  demoExplain: { lineHeight: 18 },
   placeholderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   manageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   divider: { height: 1, backgroundColor: theme.color.line.hairline, marginVertical: theme.space.sm },

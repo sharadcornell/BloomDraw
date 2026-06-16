@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { AppText, BackHeader, Card, Chip, ProjectorCanvas, Screen } from '@/components';
+import { AppText, BackHeader, Card, Chip, DemoModeBadge, ProjectorCanvas, Screen } from '@/components';
 import { strings } from '@/lib/strings';
 import {
   BRIGHTNESS_LEVELS,
@@ -36,10 +37,7 @@ export default function ProjectorScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <BackHeader
-        title={strings.projector.title}
-        right={source.demo ? <Chip label={strings.demoMode} emoji="✨" accent={theme.color.brand.violetDeep} /> : null}
-      />
+      <BackHeader title={strings.projector.title} right={<DemoModeBadge force={source.demo} />} />
 
       <View style={styles.labelRow}>
         <Chip label={strings.projector.sourceLabels[source.kind]} accent={theme.color.brand.sky} />
@@ -48,7 +46,9 @@ export default function ProjectorScreen() {
         </AppText>
       </View>
 
-      <ProjectorCanvas source={source} state={state} />
+      <Animated.View entering={FadeIn.duration(450)} style={styles.canvasWrap}>
+        <ProjectorCanvas source={source} state={state} />
+      </Animated.View>
 
       <View style={styles.controls}>
         <ControlButton
@@ -137,6 +137,7 @@ function ControlButton({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  canvasWrap: { flex: 1 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space.sm, marginTop: theme.space.sm },
   controls: {
     flexDirection: 'row',

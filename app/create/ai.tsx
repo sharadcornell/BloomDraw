@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -26,6 +27,7 @@ export default function AiPromptScreen() {
   const onGenerate = async () => {
     const outcome = await ai.run(prompt, ageRange);
     if (outcome.status === 'done') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.push({ pathname: '/create/ai-result', params: { id: outcome.recent.id } });
     }
   };

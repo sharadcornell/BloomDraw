@@ -9,7 +9,7 @@ import {
   Banner,
   Button,
   Card,
-  Chip,
+  DemoModeBadge,
   EmptyState,
   Screen,
   SectionHeader,
@@ -52,10 +52,7 @@ export default function AiResultScreen() {
 
   return (
     <Screen scroll>
-      <BackHeader
-        title={strings.ai.resultTitle}
-        right={item.demo ? <Chip label={strings.demoMode} emoji="✨" accent={theme.color.brand.violetDeep} /> : null}
-      />
+      <BackHeader title={strings.ai.resultTitle} right={<DemoModeBadge force={item.demo} />} />
 
       <Animated.View entering={FadeInDown.duration(400)} style={styles.section}>
         <AiArtView url={item.imageUrl} demo={item.demo} kind="image" seed={seed} height={280} />

@@ -129,6 +129,11 @@ export const strings = {
     safetyTitle: 'Kid-safe AI',
     safetyNote:
       "Every AI idea is checked to keep things friendly and safe for kids. We never show scary or grown-up content.",
+    demoExplain:
+      'Demo mode is on — creations use friendly sample art, so everything works without any setup or keys.',
+    connected: 'Connected — creations use the live art helper.',
+    manage: 'Manage',
+    clear: 'Clear',
     account: 'Account & sign in',
     privacy: 'Privacy & safety',
     comingSoon: 'Coming soon',
@@ -138,6 +143,7 @@ export const strings = {
     recents: 'Your creations will bloom here.\nMake your first one!',
     favorites: 'Tap the heart on any drawing to save it here.',
     library: 'Library coming soon — drawings are on the way!',
+    explore: 'No drawings match yet —\ntry another age or category.',
   },
   errors: {
     generic: "Something went wrong, but it's not your fault. Try again!",

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
@@ -33,7 +33,10 @@ export default function ExploreScreen() {
   const [age, setAge] = useState<AgeRangeId | null>(storeAge);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
 
-  const results = filterItems({ category, age, difficulty });
+  const results = useMemo(
+    () => filterItems({ category, age, difficulty }),
+    [category, age, difficulty],
+  );
   const hasFilters = category !== null || age !== null || difficulty !== null;
   const cardWidth = isTablet ? '31.5%' : '47.5%';
 
@@ -120,7 +123,7 @@ export default function ExploreScreen() {
       {results.length === 0 ? (
         <EmptyState
           emoji="🔍"
-          message="No drawings match yet — try another age or category."
+          message={strings.empty.explore}
           actionLabel="Reset filters"
           onAction={resetFilters}
         />

@@ -55,7 +55,7 @@ Run on at least **one iOS** and **one Android** target. Record pass/fail + notes
 | T15 | Camera | Create → Take photo (device) | Permission prompt; capture → preview → variants; denied → explainer + gallery fallback (AC-6, edge) |
 | T16 | Projector | Open preview from a result | Full-screen; rotate/zoom/brightness/high-contrast work; "coming soon" present (AC-10) |
 | T17 | Recents | Make 2 creations → Recents | Both listed newest-first; re-open; delete; clear (AC-9) |
-| T18 | Settings | Open Settings | Age range editable; safety note; demo-mode indicator (when no keys); version; future placeholders inert |
+| T18 | Settings | Open Settings | Age range editable; safety note; demo-mode indicator **+ plain-language explanation** when no keys (or a "Connected" line when configured); unified Demo badge style matches the creation/result/projector screens; version; future placeholders inert |
 | T19 | Offline (configured) | Supabase configured, airplane mode → launch + browse + try AI/upload | Library/favorites/recents work from local; AI/upload show "You're offline right now…" + Retry; **real provider is never called while offline**; no crash (edge) |
 | T19b | Unconfigured (local/mock) | No Supabase env → run every flow | App fully demoable in mock; AI/upload return mock + Demo badge; metadata writes skipped; no crash |
 | T20 | Demo mode | No keys / `AI_MOCK_MODE=true` → run AI + upload | All flows complete with mock outputs + Demo-mode badge (AC-12) |
@@ -73,7 +73,7 @@ Run on at least **one iOS** and **one Android** target. Record pass/fail + notes
 ## 5. Device checks
 - **iOS:** one recent iPhone (phone layout) + one iPad (tablet layout). Simulator OK for most; camera requires a physical device.
 - **Android:** one recent phone + one tablet (or large emulator). Camera on physical device.
-- Check: safe areas/notch, font scaling (large dynamic type), reduce-motion, 2-col (phone) vs 3–4-col (tablet) grids, splash on cold start, 60fps on Home scroll + projector gestures.
+- Check: safe areas/notch, font scaling (large dynamic type — `AppText` caps per-variant `maxFontSizeMultiplier` so layouts hold), reduce-motion, 2-col (phone) vs 3–4-col (tablet) grids, splash on cold start, 60fps on Home scroll + projector controls.
 - **Cold-start measurement (AC-1):** measure < 3s to interactive on a **production/preview or dev-client build on a mid-range device**, not against the Metro/Expo-Go dev server (whose on-the-fly bundling is not representative and does not block implementation). Record the build type + device used.
 
 ## 6. Expected results summary
