@@ -18,8 +18,16 @@ Run from repo root after each milestone and before handoff:
 
 If a script is missing it must be added in M1/M11 or its absence documented with rationale.
 
+**M11 bundle secret-scan (AC-11) — how it was run:** `npx expo export -p ios` then grep the
+`dist/` Hermes bundle for `sk-…`/`r8_…`/`service_role`/`SERVICE_ROLE_KEY`/`OPENAI_API_KEY`/
+`REPLICATE_API_TOKEN` and for JWT (`eyJ…`) strings. Pass = no provider/service-role keys and
+no `EXPO_PUBLIC_*` secret values present (export with no env set ⇒ no anon key embedded). Note
+that `sk-` substring hits inside Hermes word concatenations (e.g. `harddisk-`, `flask-`, `mask-`)
+are false positives, not keys.
+
 ## 2. Unit tests (targeted, not exhaustive)
 - **Moderation mapping:** unsafe keywords → `blocked` + exact child message; borderline → `rewritten` + banner; safe → `safe`. No rewrite loop.
+- **Moderation — no category leak (M11):** the `moderate-prompt` wire `reasonCode` is coarse only (`ok` | `rewrite_softened` | `blocked`) via `publicReasonCode()`; the raw block category (`violence`/`sexual`/`self_harm`/`hate`/`dangerous`) is server-log-only and never returned to the client (CLAUDE.md AI-safety rule).
 - **Strings module:** all referenced keys exist; block/rewrite copy matches PRD verbatim.
 - **State stores:** favorites add/remove/idempotency; recents cap (≤50) + clear; age persistence; corrupt-payload safe reset.
 - **Content integrity (`src/content` is source of truth):** ≥100 items; every item (incl. every hero — e.g., **Cute robot → Space**) maps to one of the 8 valid categories, no orphans; step count matches difficulty (easy4/med6/hard8) for authored items; 8 categories present; ≥20 hero items flagged; no duplicate slugs.

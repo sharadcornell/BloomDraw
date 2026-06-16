@@ -3,6 +3,7 @@
 // (docs/05 §11). Raw categories stay server-side; the child only sees userMessage.
 import { getProvider } from '../_shared/ai-provider/index.ts';
 import { makeHandler } from '../_shared/handler.ts';
+import { publicReasonCode } from '../_shared/moderation.ts';
 import { okEnvelope } from '../_shared/response.ts';
 import { parseJsonBody, validateAgeRange, validatePrompt } from '../_shared/validation.ts';
 
@@ -20,12 +21,14 @@ Deno.serve(
       console.log(`[moderate] status=${result.status} reason=${result.reasonCode} len=${prompt.length}`);
     }
 
+    // NEVER return the raw category (result.reasonCode) — it is logged above and
+    // stays server-side. The wire carries only a coarse, category-free code.
     return {
       body: okEnvelope({
         status: result.status,
         safePrompt: result.safePrompt,
         userMessage: result.userMessage,
-        reasonCode: result.reasonCode,
+        reasonCode: publicReasonCode(result.status),
       }),
     };
   }),

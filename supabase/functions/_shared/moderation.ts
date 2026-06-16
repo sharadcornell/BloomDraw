@@ -12,12 +12,25 @@
 // Never loops: a rewrite is re-checked exactly ONCE; if still unsafe → block.
 // Raw categories are returned only as a server-side `reasonCode`, never shown.
 import { strings } from './strings.ts';
-import type { AgeRange, ModerationResult } from './types.ts';
+import type { AgeRange, ModerationResult, ModerationStatus } from './types.ts';
 
 export type Classification =
   | { kind: 'safe' }
   | { kind: 'block'; category: string }
   | { kind: 'soften' };
+
+/**
+ * Coarse, category-free reason code that is SAFE to return to the client.
+ *
+ * The raw block category (e.g. 'violence', 'self_harm', 'sexual') is a
+ * server-side diagnostic ONLY (CLAUDE.md AI-safety rules: never expose raw
+ * moderation categories to the child) and must stay in server logs. The wire
+ * carries only this coarse status mirror, matching the client mock
+ * (`src/services/aiMock.ts`).
+ */
+export function publicReasonCode(status: ModerationStatus): string {
+  return status === 'blocked' ? 'blocked' : status === 'rewritten' ? 'rewrite_softened' : 'ok';
+}
 
 // Clearly-unsafe terms → BLOCK. `category` becomes the server-side reasonCode.
 const BLOCK_GROUPS: { category: string; terms: string[] }[] = [

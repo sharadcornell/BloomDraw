@@ -61,7 +61,7 @@ Classifies a prompt and, when borderline, returns a gentle kid-safe rewrite. **A
 | status | `safe`\|`rewritten`\|`blocked` | |
 | safePrompt | string | original (safe), rewritten (rewritten), or `""` (blocked) |
 | userMessage | string | shown only when rewritten/blocked (see copy below) |
-| reasonCode | string | **server log only**; e.g. `ok`, `rewrite_softened`, `violence`, `sexual`, `hate`, `self_harm`, `dangerous`, `scary` |
+| reasonCode | string | **coarse, category-free** on the wire — only `ok`, `rewrite_softened`, or `blocked`. The raw block category (`violence`, `sexual`, `hate`, `self_harm`, `dangerous`, `scary`) is **server log only** and is NEVER returned to the client (CLAUDE.md AI-safety rule). |
 
 **Examples**
 ```json
@@ -70,7 +70,7 @@ Classifies a prompt and, when borderline, returns a gentle kid-safe rewrite. **A
 // rewritten
 { "ok": true, "data": { "status": "rewritten", "safePrompt": "friendly dragon flying in a magical forest", "userMessage": "I made your idea a little more kid-friendly.", "reasonCode": "rewrite_softened" } }
 // blocked
-{ "ok": true, "data": { "status": "blocked", "safePrompt": "", "userMessage": "Let’s make something fun and safe to draw. Try asking for an animal, space scene, vehicle, flower, or cartoon character.", "reasonCode": "violence" } }
+{ "ok": true, "data": { "status": "blocked", "safePrompt": "", "userMessage": "Let’s make something fun and safe to draw. Try asking for an animal, space scene, vehicle, flower, or cartoon character.", "reasonCode": "blocked" } }
 ```
 Block categories: violence, sexual/adult, hate, self-harm, dangerous, disturbing/scary-for-children. Borderline (mild aggression/scary) → prefer **rewrite**; clearly unsafe → **block**. Never loops: a rewrite is moderated once; if still unsafe → block.
 

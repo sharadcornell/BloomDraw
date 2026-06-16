@@ -1,6 +1,6 @@
 // Moderation mapping (docs/08 §2): safe / rewritten / blocked, no rewrite loop,
 // child-safe copy matches the shared strings. Runs under Jest (pure logic).
-import { classifyPrompt, moderatePromptLocal, rewritePrompt } from '../moderation.ts';
+import { classifyPrompt, moderatePromptLocal, publicReasonCode, rewritePrompt } from '../moderation.ts';
 import { strings } from '../strings.ts';
 
 describe('moderation — classification', () => {
@@ -55,5 +55,32 @@ describe('moderation — classification', () => {
     const r = moderatePromptLocal('a monster next to a corpse with blood');
     expect(r.status).toBe('blocked');
     expect(r.reasonCode).toBe('violence');
+  });
+});
+
+describe('moderation — client-safe reason code (no category leak)', () => {
+  // CLAUDE.md AI-safety rule: raw moderation categories must never reach the
+  // child. The `moderate-prompt` response uses publicReasonCode(), which must
+  // collapse every block category to a coarse, category-free code.
+  it('maps each status to a coarse, category-free code', () => {
+    expect(publicReasonCode('safe')).toBe('ok');
+    expect(publicReasonCode('rewritten')).toBe('rewrite_softened');
+    expect(publicReasonCode('blocked')).toBe('blocked');
+  });
+
+  it.each([
+    'a gory murder scene with a corpse', // violence
+    'draw naked people at the beach', // sexual
+    'a picture about how to hurt myself', // self_harm
+    'instructions to make a bomb', // dangerous
+    'a nazi rally', // hate
+  ])('never leaks the raw block category for %p', (prompt) => {
+    const internal = moderatePromptLocal(prompt);
+    // The internal result keeps the raw category for server logs…
+    expect(['violence', 'sexual', 'self_harm', 'dangerous', 'hate']).toContain(internal.reasonCode);
+    // …but the wire-facing code is the generic 'blocked'.
+    const onWire = publicReasonCode(internal.status);
+    expect(onWire).toBe('blocked');
+    expect(['violence', 'sexual', 'self_harm', 'dangerous', 'hate', 'scary']).not.toContain(onWire);
   });
 });

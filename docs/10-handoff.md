@@ -559,7 +559,46 @@ src/lib/strings.ts             (settings demo copy + Explore empty-state)
 README.md / docs/{08-test-plan,10-handoff}.md (updated for M10)
 ```
 
-## How to run (current — Milestone 10)
+**Milestone 11 — Testing & fixing (QA pass):**
+A hard QA / regression pass across the existing MVP — no new product scope. Baseline
+was green (typecheck/lint clean, 128/128 tests, expo-doctor 18/18). Two real bugs found
+and fixed:
+```
+supabase/functions/_shared/moderation.ts        (+publicReasonCode() — coarse, category-free wire code)
+supabase/functions/moderate-prompt/index.ts     (return coarse reasonCode; raw category stays server-log-only)
+supabase/functions/_shared/__tests__/moderation.test.ts  (+6 tests: no category leak on the wire)
+src/components/DemoModeBadge.tsx                 (useIsDemoMode mirrors isSupabaseConfigured — FORCE_MOCK / missing anon key)
+docs/05-api-contract.md                          (moderate-prompt reasonCode documented as coarse/non-category)
+```
+- **Bug 1 (safety leak — fixed):** `moderate-prompt` returned the raw moderation
+  category (`violence`/`sexual`/`self_harm`/`hate`/`dangerous`) to the client in
+  `reasonCode`, contradicting the function's own header and the CLAUDE.md non-negotiable
+  ("never expose raw moderation categories to the child"). Now the wire carries only
+  `ok` | `rewrite_softened` | `blocked`; the raw category is logged server-side only.
+  The app never rendered `reasonCode`, so this is defense-in-depth, not a visible-copy fix.
+- **Bug 2 (demo-badge correctness — fixed):** `useIsDemoMode()` checked only
+  `EXPO_PUBLIC_SUPABASE_URL`, so with `EXPO_PUBLIC_FORCE_MOCK=true` or a missing anon key
+  the app ran entirely on mock output while the Demo badge was hidden and Settings showed
+  "Connected — creations use the live art helper." Now it mirrors `isSupabaseConfigured`,
+  so the badge can never disagree with the transport the flows actually use.
+- **Audited, no change needed:** all 14 routes + param safety (missing/invalid params
+  degrade to child-safe not-found/EmptyState, never crash); local/mock + no-backend boot
+  (Supabase client null-safe; session/edge fail-soft; splash gate has a 2s force-ready
+  fallback); state corruption recovery (every persisted store `_sanitize`s on rehydrate);
+  content integrity (100 items / 8 categories / 20 heroes / 0 dup slugs / Cute Robot in
+  Space / seed matches generator); child-safe error copy on every path; no secrets in
+  `app`/`src` or the exported bundle (only `EXPO_PUBLIC_*`); RLS/private-bucket/mock-fallback
+  foundations (see backend audit). Existing helpers (projector source normalization, upload
+  orchestration, AI safe/rewritten/blocked/error paths) already had strong unit coverage.
+- **Backend observations (documented, intentional — not changed):** rate limiting
+  **fails open** when Supabase accounting is unavailable (deliberate, so the mock-default
+  app never hard-breaks; pre-real-key checklist should monitor that the service client is
+  non-null in production); `process-uploaded-image` persists `'complete'` for partial
+  success (DB enum has no `'partial'`; API `status:'partial'` is client-only); the
+  all-styles-fail branch throws `provider_unavailable` so its `'failed'` body is unused
+  (child still sees the nap message).
+
+## How to run (current — Milestone 11)
 See `09-deployment-runbook.md` §2. The app runs fully **without** Supabase (local/mock).
 ```bash
 npm install && cp .env.example .env && npm run start   # mock mode (no keys) — no crash
@@ -600,7 +639,7 @@ Never place secret keys in `.env`/`EXPO_PUBLIC_*`/the app bundle. With no keys (
 - **Milestone 8 checks (all pass):** `npm test` (**118/118** — +15 upload tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates route types), `npx expo export -p ios` (5.0MB bundle). Camera/gallery/upload not exercised on-device here.
 - **Milestone 9 checks (all pass):** `npm test` (**128/128** — +10 projector tests), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, after typed-routes regen via Metro), `npx expo-doctor` (18/18), `npm run start` (Metro boots, regenerates the `/projector` route type), `npx expo export -p ios` (5.0MB bundle). Not exercised on-device here.
 - **Milestone 10 checks (all pass):** `npm test` (**128/128**, unchanged — polish added no new logic), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors, no new routes), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB bundle); in-code navigation checklist confirmed all 14 screens reachable. Not exercised on-device here.
-- The full unit/manual test matrix (`08-test-plan.md`) runs in Milestone 11.
+- **Milestone 11 checks (all pass):** baseline was green; after the two fixes — `npm test` (**134/134** — +6 moderation no-leak tests across the same 16 suites), `npm run lint` (0 findings/warnings), `npm run typecheck` (0 errors), `npx expo-doctor` (18/18), `npx expo export -p ios` (5.0MB Hermes bundle). **Bundle secret-scan (AC-11):** no `EXPO_PUBLIC_*` secret values, no service-role/provider keys, no JWT (`eyJ…`) strings in `dist/` (export run with no env set; the only `sk-` regex hits are Hermes string-table word artifacts — `harddisk-`, `flask-`, `mask-`). **Deno/Supabase not installed here** → `deno check supabase/functions/**/*.ts`, `supabase start`, `supabase db reset`, `supabase functions serve`, `supabase migration list` remain documented for a machine with the CLIs. **Device/simulator pass still pending** (no simulator run here) — code/Metro/bundle level only.
 
 ## Data retention (V1)
 Anonymous uploaded images and AI-generated images (plus their metadata/prompts) are retained for **30 days by default** (`DATA_RETENTION_DAYS`, configurable), then purged from Postgres and Storage by a scheduled job. Content tables are retained. Full policy: `04-database-schema.md` §9; setup: `09-deployment-runbook.md` §4 "Data retention purge". Confirm/adjust the window with the owner before a real-key pilot.
@@ -620,8 +659,8 @@ Anonymous uploaded images and AI-generated images (plus their metadata/prompts) 
 - Open product decisions remain (see `00-product-brief.md` §Open questions) — none block a mock-mode build.
 
 ## Next steps
-1. **Get approval to proceed to Milestone 11 (Testing & fixing: run the full `08-test-plan.md` matrix — automated checks + scripted manual flows on iOS + Android + tablet, a bundle secret-scan for AC-11, Edge-Function `supabase functions serve` smoke, and fix anything found).** (Milestones 1–10 are complete.)
-2. Execute Milestones 11→12 (`07-implementation-plan.md`), testing after each, local commit per completed milestone (with summary), no remote push.
+1. **Milestone 11 (Testing & fixing) is complete** — automated checks pass (134/134), two real bugs fixed (moderation category leak; demo-badge correctness), AC-11 bundle secret-scan clean. **Still pending (require a machine with the tooling / hardware):** on-device/simulator pass of the scripted manual flows on iOS + Android + tablet, and the Deno/Supabase Edge smoke (`deno check`, `supabase functions serve`, `supabase db reset`). **Get approval before starting Milestone 12.**
+2. Execute Milestone 12 (`07-implementation-plan.md`), testing after, local commit per completed milestone (with summary), no remote push.
 3. Resolve the brief's open questions before a real-key pilot (provider/budget, privacy posture, storage exposure, fonts/branding, moderation strictness, telemetry, min OS).
 4. Pre-release (separate track): legal/privacy review for a kids' product, store metadata, real brand/asset pass.
 
